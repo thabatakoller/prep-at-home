@@ -1634,76 +1634,91 @@ async function carregarDadosReais(){
 function construirOsDeSheets(linhas){
   if(!linhas||!linhas.length) return [];
   const primeiroNome = currentLider.nome.split(' ')[0].toUpperCase();
-  // Normaliza data dd/MM/yyyy → yyyy-MM-dd
+
+  // Detecta o nome exato da coluna Data (pode ter \n ou sufixo)
+  const amostra = linhas[0] ? Object.keys(linhas[0]) : [];
+  const colData  = amostra.find(k=>k.toUpperCase().startsWith('DATA'))||'Data (Clique 2x)';
+  const colOS    = amostra.find(k=>k==='OS'||k==='O.S')||'OS';
+  const colLider = amostra.find(k=>k.toUpperCase().startsWith('LIDER'))||'Lider';
+  const colFreel = amostra.find(k=>k.toUpperCase().includes('SOBRENOME'))||'Nome e SOBRENOME do Freelancer';
+  const colCliente = amostra.find(k=>k.toUpperCase().startsWith('CLIENTE'))||'Cliente';
+  const colHoras = amostra.find(k=>k.toUpperCase().includes('QTD') && k.toUpperCase().includes('HORA'))||'Qtd Horas';
+
   function normData(v){
     if(!v) return '';
     const s = String(v).trim();
-    if(s.includes('/')) return s.split('/').reverse().join('-').slice(0,10);
+    if(!s||s==='0') return '';
+    // dd/MM/yyyy → yyyy-MM-dd
+    if(s.includes('/') && s.length >= 8){
+      const parts = s.split('/');
+      if(parts.length===3) return `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+    }
     return s.slice(0,10);
   }
+
   // Agrupa linhas por número de OS
   const grupos = {};
   linhas.forEach(row=>{
-    const osNum = String(row['OS']||'').trim();
-    if(!osNum) return;
-    const data = normData(row['Data']);
-    if(data < DATA_CORTE) return; // só OSs a partir de 01/04/2026
-    if(!grupos[osNum]) grupos[osNum]={rows:[], lider:'', cliente:''};
+    const osNum = String(row[colOS]||'').trim();
+    if(!osNum||osNum==='0') return;
+    const data = normData(row[colData]);
+    if(!data) return;
+    if(!grupos[osNum]) grupos[osNum]={rows:[], lider:'', cliente:'', data};
     grupos[osNum].rows.push(row);
-    if((row['Lider']||'').toUpperCase().includes(primeiroNome)) grupos[osNum].lider = row['Lider']||'';
-    if(!grupos[osNum].cliente) grupos[osNum].cliente = row['Cliente']||'—';
+    const nomeLider = String(row[colLider]||'').toUpperCase().trim();
+    if(nomeLider.includes(primeiroNome)) grupos[osNum].lider = row[colLider]||'';
+    if(!grupos[osNum].cliente) grupos[osNum].cliente = String(row[colCliente]||'—');
+    if(!grupos[osNum].data) grupos[osNum].data = data;
   });
 
   const resultado = [];
   Object.entries(grupos).forEach(([osNum, g])=>{
-    // Verifica se o líder atual participou desta OS (como líder OU freelancer)
-    const euFuiLider      = g.lider.toUpperCase().includes(primeiroNome);
-    const minhaLinhaFreel = g.rows.find(r=>(r['Nome e SOBRENOME do Freelancer']||'').toUpperCase().includes(primeiroNome));
+    const euFuiLider = g.lider.toUpperCase().includes(primeiroNome);
+    const minhaLinhaFreel = g.rows.find(r=>
+      String(r[colFreel]||'').toUpperCase().includes(primeiroNome)
+    );
     if(!euFuiLider && !minhaLinhaFreel) return;
 
-    const tipo   = euFuiLider ? 'lider' : 'freelancer';
+    const tipo = euFuiLider ? 'lider' : 'freelancer';
     const minhaLinha = euFuiLider
-      ? g.rows.find(r=>(r['Lider']||'').toUpperCase().includes(primeiroNome))
+      ? g.rows.find(r=>String(r[colLider]||'').toUpperCase().includes(primeiroNome))
       : minhaLinhaFreel;
     if(!minhaLinha) return;
 
-    const data    = normData(minhaLinha['Data']);
-    const horas   = parseFloat(minhaLinha['Qtd Horas'])||0;
-    const agentes = g.rows.length;
-    const bonus   = tipo==='lider' && String(minhaLinha['META']||'').trim()!=='' && String(minhaLinha['META']||'').trim()!=='-';
+    const data   = g.data || normData(minhaLinha[colData]);
+    const horas  = parseFloat(minhaLinha[colHoras])||0;
+    const agentes= g.rows.length;
+    const meta   = String(minhaLinha['META']||'').trim();
+    const bonus  = tipo==='lider' && meta!=='' && meta!=='0' && meta!=='-';
 
     resultado.push({
-      id:          'sh_'+osNum,
-      num:         'OS #'+osNum,
-      lider:       currentLider.id,
+      id:       'sh_'+osNum,
+      num:      'OS #'+osNum,
+      lider:    currentLider.id,
       tipo,
-      empresa:     g.cliente,
-      cod:         '—',
+      empresa:  g.cliente,
+      cod:      '—',
       marketplace: 'Amazon FBA',
       data,
-      regiao:      '—',
-      endereco:    '—',
-      previsto:    { et3:0, et6:0, etP:0, k3:0, k6:0, pal:0, skus:0 },
-      status:      'encerrada',
-      obs:         '',
+      regiao:   '—',
+      endereco: '—',
+      previsto: { et3:0, et6:0, etP:0, k3:0, k6:0, pal:0, skus:0 },
+      status:   'encerrada',
+      obs:      '',
       real:{
-        et3:0, et6:0, etP:0, k3:0, k6:0, pal:0,
-        skus:  0,
-        horas,
-        agentes,
-        obs:   '',
-        bonus
+        et3:0, et6:0, etP:0, k3:0, k6:0, pal:0, skus:0,
+        horas, agentes, obs:'', bonus
       },
       planilha:{
-        horaInicio:   minhaLinha['Hora Inicio']||'',
-        horaFim:      minhaLinha['Hora Fim']||'',
+        horaInicio:   String(minhaLinha['Hora Início']||minhaLinha['Hora Inicio']||''),
+        horaFim:      String(minhaLinha['Hora Fim']||''),
         pausaMin:     parseFloat(minhaLinha['Pausa'])||30,
         transporte:   parseFloat(minhaLinha['TRANS PORTE'])||0,
         lanche:       parseFloat(minhaLinha['LANCHE'])||0,
         metaAplicavel:bonus,
         totalPagar:   parseFloat(minhaLinha['Total a pagar'])||0,
-        pago:         minhaLinha['PAGO']||'',
-        status:       minhaLinha['Status']||''
+        pago:         String(minhaLinha['PAGO']||''),
+        status:       String(minhaLinha['Status']||'')
       }
     });
   });
