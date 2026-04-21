@@ -1,0 +1,1748 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Painel do Líder — Prep at Home</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --orange:#F4630A; --orange-l:#FF8A3D; --orange-pale:#FFF0E6;
+  --green:#1A7A4A;  --green-m:#24A865;  --green-l:#D6F5E5;
+  --dark:#0E0E0E;   --dark2:#1A1A1A;    --dark3:#252525;
+  --mid:#5A5A5A;    --light:#F7F5F2;    --white:#fff;
+  --border:rgba(0,0,0,0.08);
+  --navy:#0F2D4A;
+  --red:#D83B3B;    --red-l:#FEF2F2;
+  --yellow:#F59E0B; --yellow-l:#FFFBEB;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--light);color:var(--dark);min-height:100vh}
+h1,h2,h3,h4{font-family:'Syne',sans-serif}
+
+/* LOGIN */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--dark);position:relative;overflow:hidden}
+.login-bg{position:absolute;inset:0;background:radial-gradient(ellipse 60% 60% at 30% 50%,rgba(244,99,10,.08),transparent 70%),radial-gradient(ellipse 40% 40% at 80% 80%,rgba(26,122,74,.06),transparent 70%);pointer-events:none}
+.login-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none}
+.login-box{background:var(--dark2);border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:48px 40px;width:100%;max-width:420px;position:relative;z-index:1}
+.login-logo{display:flex;align-items:center;gap:12px;margin-bottom:36px}
+.login-logo-mark{width:40px;height:40px;background:var(--dark3);border-radius:10px;display:flex;align-items:center;justify-content:center}
+.login-brand{font-family:'Syne',sans-serif;font-weight:800;font-size:15px;color:white;display:block;line-height:1}
+.login-sub{font-size:9px;color:rgba(255,255,255,.35);letter-spacing:1.5px;text-transform:uppercase;display:block;margin-top:3px}
+.login-title{font-family:'Syne',sans-serif;font-weight:800;font-size:26px;color:white;margin-bottom:6px;letter-spacing:-.5px}
+.login-desc{font-size:13px;color:rgba(255,255,255,.4);margin-bottom:28px;line-height:1.5}
+.lf-group{margin-bottom:16px}
+.lf-label{display:block;font-size:10px;font-weight:500;color:rgba(255,255,255,.4);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+.lf-input{width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:white;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border-color .2s}
+.lf-input:focus{border-color:var(--orange)}
+.lf-input::placeholder{color:rgba(255,255,255,.25)}
+.btn-login{width:100%;padding:13px;border-radius:100px;background:var(--orange);color:white;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;border:none;cursor:pointer;margin-top:8px;transition:background .2s,transform .15s}
+.btn-login:hover{background:var(--orange-l);transform:translateY(-1px)}
+.login-err{background:rgba(216,59,59,.15);border:1px solid rgba(216,59,59,.3);border-radius:10px;padding:10px 14px;font-size:12px;color:#FF9090;margin-bottom:16px;display:none}
+.login-err.show{display:block}
+.login-note{margin-top:20px;font-size:11px;color:rgba(255,255,255,.22);text-align:center;line-height:1.5}
+
+/* TELA TROCA DE SENHA (1º acesso) */
+.senha-wrap{min-height:100vh;display:none;align-items:center;justify-content:center;background:var(--dark);position:relative;overflow:hidden}
+.senha-wrap.visible{display:flex}
+.senha-box{background:var(--dark2);border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:48px 40px;width:100%;max-width:420px;position:relative;z-index:1}
+.senha-badge{background:rgba(244,99,10,.15);border:1px solid rgba(244,99,10,.3);border-radius:10px;padding:12px 16px;margin-bottom:24px;font-size:13px;color:var(--orange-l);line-height:1.5}
+.senha-badge strong{display:block;margin-bottom:4px;font-size:14px}
+.senha-req{font-size:11px;color:rgba(255,255,255,.3);margin-top:12px;line-height:1.7}
+.senha-req li{margin-left:14px}
+.senha-strength{height:4px;border-radius:100px;margin-top:8px;transition:width .3s,background .3s;width:0}
+.senha-err{background:rgba(216,59,59,.15);border:1px solid rgba(216,59,59,.3);border-radius:10px;padding:10px 14px;font-size:12px;color:#FF9090;margin-bottom:14px;display:none}
+.senha-err.show{display:block}
+
+/* MODAL ALTERAR SENHA (dentro do app) */
+.senha-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:700;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .3s}
+.senha-modal-overlay.open{opacity:1;pointer-events:all}
+.senha-modal-box{background:white;border-radius:20px;padding:36px;max-width:420px;width:100%;transform:scale(.96);transition:transform .3s}
+.senha-modal-overlay.open .senha-modal-box{transform:scale(1)}
+.senha-modal-title{font-family:'Syne',sans-serif;font-weight:800;font-size:20px;letter-spacing:-.5px;margin-bottom:6px}
+.senha-modal-sub{font-size:13px;color:var(--mid);margin-bottom:22px;line-height:1.5}
+.sm-group{margin-bottom:14px}
+.sm-label{display:block;font-size:10px;font-weight:500;color:var(--mid);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px}
+.sm-input-wrap{position:relative}
+.sm-input{width:100%;padding:10px 38px 10px 13px;border-radius:10px;border:1.5px solid var(--border);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--dark);background:var(--light);outline:none;transition:border-color .2s}
+.sm-input:focus{border-color:var(--orange);background:white}
+.sm-eye{position:absolute;right:11px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--mid);font-size:15px;padding:2px}
+.sm-err{background:var(--red-l);border:1px solid #FECACA;border-radius:9px;padding:9px 13px;font-size:12px;color:var(--red);margin-bottom:14px;display:none}
+.sm-err.show{display:block}
+.sm-strength-wrap{margin-top:6px;display:flex;align-items:center;gap:8px}
+.sm-strength-bar{height:4px;flex:1;border-radius:100px;background:var(--border);overflow:hidden}
+.sm-strength-fill{height:100%;border-radius:100px;transition:width .3s,background .3s;width:0}
+.sm-strength-label{font-size:10px;color:var(--mid);white-space:nowrap}
+.sm-actions{display:flex;gap:10px;margin-top:20px}
+.btn-sm{flex:1;padding:12px;border-radius:100px;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;border:none;cursor:pointer;transition:all .2s}
+.btn-sm.cancel{background:var(--light);color:var(--dark);border:1px solid var(--border)}
+.btn-sm.ok{background:var(--orange);color:white}
+.btn-sm.ok:hover{background:var(--orange-l)}
+.btn-sm.ok:disabled{opacity:.4;cursor:not-allowed}
+
+/* botão alterar senha no topbar */
+.btn-senha{background:rgba(255,153,0,.15);border:1px solid rgba(255,153,0,.25);border-radius:8px;color:#FFB74D;font-size:11px;padding:6px 12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;display:flex;align-items:center;gap:5px}
+.btn-senha:hover{background:rgba(255,153,0,.25);color:#FFCC80}
+.btn-senha.segura{background:rgba(36,168,101,.12);border-color:rgba(36,168,101,.2);color:var(--green-m)}
+.btn-senha.segura:hover{background:rgba(36,168,101,.2)}
+
+/* DATA SOURCE BADGE */
+.source-badge{display:inline-flex;align-items:center;gap:6px;border-radius:100px;padding:4px 12px;font-size:11px;font-weight:600;border:1px solid}
+.source-badge.demo{background:var(--yellow-l);color:#92400E;border-color:#FDE68A}
+.source-badge.live{background:var(--green-l);color:var(--green);border-color:#A7F3D0}
+.source-badge.loading{background:rgba(255,255,255,.08);color:rgba(255,255,255,.5);border-color:rgba(255,255,255,.12)}
+.source-dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+.source-dot.pulse{animation:pulse2 1.5s infinite}
+@keyframes pulse2{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* LOADING OVERLAY */
+.load-overlay{position:fixed;inset:0;background:var(--dark);z-index:800;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;transition:opacity .4s}
+.load-overlay.hidden{opacity:0;pointer-events:none}
+.load-spinner{width:44px;height:44px;border:3px solid rgba(255,255,255,.1);border-top-color:var(--orange);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load-msg{font-size:13px;color:rgba(255,255,255,.5)}
+.load-steps{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.load-step{font-size:12px;color:rgba(255,255,255,.3);display:flex;align-items:center;gap:8px;transition:color .3s}
+.load-step.done{color:var(--green-m)}
+.load-step.active{color:white}
+.load-step-icon{font-size:14px;width:20px;text-align:center}
+
+/* DEBUG MODAL */
+.debug-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:900;display:flex;align-items:flex-start;justify-content:center;padding:30px 20px;opacity:0;pointer-events:none;transition:opacity .3s;overflow-y:auto}
+.debug-overlay.open{opacity:1;pointer-events:all}
+.debug-box{background:#1a1a1a;border-radius:16px;width:100%;max-width:800px;overflow:hidden}
+.debug-top{background:var(--dark3);padding:16px 22px;display:flex;justify-content:space-between;align-items:center}
+.debug-tabs{display:flex;gap:2px;padding:0 16px;background:var(--dark3);border-bottom:1px solid rgba(255,255,255,.06)}
+.debug-tab{padding:10px 16px;font-size:12px;color:rgba(255,255,255,.4);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s}
+.debug-tab.active{color:var(--orange-l);border-color:var(--orange)}
+.debug-content{padding:20px;max-height:60vh;overflow-y:auto}
+.debug-pre{background:rgba(255,255,255,.04);border-radius:10px;padding:16px;font-family:monospace;font-size:11px;color:#A3E6A0;white-space:pre-wrap;word-break:break-all;line-height:1.6;border:1px solid rgba(255,255,255,.06)}
+.debug-status{display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:12px}
+.debug-status.ok{color:var(--green-m)}
+.debug-status.err{color:#FF9090}
+.debug-status.warn{color:#FBBF24}
+
+/* APP SHELL */
+.app{display:none;min-height:100vh;flex-direction:column}
+.app.visible{display:flex}
+
+/* TOP BAR */
+.topbar{background:var(--dark);padding:0 32px;height:60px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:sticky;top:0;z-index:100}
+.topbar-left{display:flex;align-items:center;gap:14px}
+.topbar-logo-mark{width:32px;height:32px;background:rgba(255,255,255,.08);border-radius:8px;display:flex;align-items:center;justify-content:center}
+.topbar-brand{font-family:'Syne',sans-serif;font-weight:800;font-size:13px;color:white;display:block;line-height:1}
+.topbar-sub{font-size:9px;color:rgba(255,255,255,.3);letter-spacing:1.5px;text-transform:uppercase;display:block;margin-top:1px}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.leader-chip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:100px;padding:5px 14px 5px 8px}
+.leader-avatar{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:10px;color:white}
+.leader-name{font-size:12px;color:rgba(255,255,255,.7);font-weight:500}
+.btn-logout{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:8px;color:rgba(255,255,255,.4);font-size:11px;padding:6px 12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s}
+.btn-logout:hover{background:rgba(255,255,255,.1);color:white}
+
+/* NAV TABS */
+.nav-tabs{background:white;border-bottom:1px solid var(--border);display:flex;padding:0 32px;gap:4px;flex-shrink:0;overflow-x:auto}
+.nav-tab{padding:14px 18px;font-size:13px;font-weight:500;color:var(--mid);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;display:flex;align-items:center;gap:7px}
+.nav-tab:hover{color:var(--dark)}
+.nav-tab.active{color:var(--orange);border-bottom-color:var(--orange);font-weight:600}
+.tab-badge{background:var(--orange);color:white;font-size:9px;font-weight:700;padding:2px 6px;border-radius:100px;font-family:'Syne',sans-serif}
+
+/* MAIN */
+.main{flex:1;padding:32px;max-width:1100px;margin:0 auto;width:100%}
+.page{display:none}
+.page.active{display:block}
+
+/* STAT CARDS */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px}
+.stat-card{background:white;border-radius:16px;padding:22px;border:1px solid var(--border)}
+.stat-card.orange{background:var(--orange);border-color:var(--orange)}
+.stat-card.green{background:var(--green);border-color:var(--green)}
+.stat-card.navy{background:var(--navy);border-color:var(--navy)}
+.stat-label{font-size:10px;color:var(--mid);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px}
+.stat-card.orange .stat-label,.stat-card.green .stat-label,.stat-card.navy .stat-label{color:rgba(255,255,255,.55)}
+.stat-value{font-family:'Syne',sans-serif;font-weight:800;font-size:32px;color:var(--dark);line-height:1}
+.stat-card.orange .stat-value,.stat-card.green .stat-value,.stat-card.navy .stat-value{color:white}
+.stat-sub{font-size:11px;color:var(--mid);margin-top:4px}
+.stat-card.orange .stat-sub,.stat-card.green .stat-sub,.stat-card.navy .stat-sub{color:rgba(255,255,255,.55)}
+
+/* OS CARDS */
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.section-title{font-family:'Syne',sans-serif;font-weight:700;font-size:18px;letter-spacing:-.3px}
+.os-list{display:flex;flex-direction:column;gap:12px}
+.os-card{background:white;border-radius:16px;border:1px solid var(--border);overflow:hidden;transition:box-shadow .2s}
+.os-card:hover{box-shadow:0 8px 30px rgba(0,0,0,.07)}
+.os-card.freelancer-card{border-left:4px solid var(--navy)}
+.os-card-header{padding:20px 22px;display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+.os-card-left{display:flex;align-items:center;gap:14px}
+.os-status-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.os-status-dot.aberta{background:var(--yellow);box-shadow:0 0 0 3px var(--yellow-l)}
+.os-status-dot.encerrada{background:var(--green-m);box-shadow:0 0 0 3px var(--green-l)}
+.os-num{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--dark)}
+.os-empresa{font-size:12px;color:var(--mid);margin-top:2px}
+.os-meta{display:flex;align-items:center;gap:16px}
+.os-meta-item{font-size:11px;color:var(--mid);display:flex;align-items:center;gap:4px}
+.os-badge{font-size:9px;font-weight:600;padding:3px 10px;border-radius:100px;letter-spacing:.5px;text-transform:uppercase}
+.os-badge.aberta{background:var(--yellow-l);color:#92400E}
+.os-badge.encerrada{background:var(--green-l);color:var(--green)}
+.os-badge.bonus{background:var(--orange-pale);color:var(--orange)}
+.os-badge.freelancer{background:#EDE9FE;color:#5B21B6}
+.os-chevron{color:var(--mid);transition:transform .3s;font-size:16px}
+.os-chevron.open{transform:rotate(180deg)}
+
+/* OS DETAIL */
+.os-detail{max-height:0;overflow:hidden;transition:max-height .4s ease}
+.os-detail.open{max-height:1400px}
+.os-detail-inner{padding:0 22px 22px;border-top:1px solid var(--border)}
+.os-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.os-info-row{display:flex;flex-direction:column;gap:3px}
+.os-info-label{font-size:10px;color:var(--mid);letter-spacing:.8px;text-transform:uppercase}
+.os-info-value{font-size:13px;font-weight:500;color:var(--dark)}
+
+/* FORM ENCERRAR */
+.encerrar-form{background:var(--light);border-radius:14px;padding:22px;margin-top:16px}
+.ef-title{font-family:'Syne',sans-serif;font-weight:700;font-size:15px;margin-bottom:4px}
+.ef-sub{font-size:12px;color:var(--mid);margin-bottom:18px}
+.ef-sec{font-size:10px;font-weight:600;color:var(--orange);letter-spacing:.8px;text-transform:uppercase;margin:16px 0 10px}
+.ef-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.ef-grid.cols2{grid-template-columns:1fr 1fr}
+.ef-item label{font-size:10px;color:var(--mid);letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:4px}
+.ef-input{width:100%;padding:9px 12px;border-radius:9px;border:1.5px solid var(--border);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--dark);background:white;outline:none;transition:border-color .2s}
+.ef-input:focus{border-color:var(--orange)}
+textarea.ef-input{resize:vertical;min-height:70px}
+.bonus-toggle{display:flex;align-items:center;gap:14px;background:white;border-radius:12px;padding:16px 18px;border:1.5px solid var(--border);cursor:pointer;transition:border-color .2s;flex:1}
+.bonus-toggle.selected{border-color:var(--green);background:var(--green-l)}
+.bonus-toggle.selected-no{border-color:var(--red);background:var(--red-l)}
+.bonus-icon{font-size:22px;flex-shrink:0}
+.bonus-text strong{font-size:13px;display:block;margin-bottom:3px}
+.bonus-text span{font-size:11px;color:var(--mid)}
+.bonus-toggle.selected .bonus-text span{color:var(--green)}
+.bonus-toggle.selected-no .bonus-text span{color:var(--red)}
+.btn-encerrar{width:100%;padding:14px;border-radius:100px;background:var(--dark);color:white;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;border:none;cursor:pointer;margin-top:18px;transition:background .2s,transform .15s}
+.btn-encerrar:hover{background:var(--dark2);transform:translateY(-1px)}
+.btn-encerrar.green{background:var(--green)}
+.btn-encerrar.green:hover{background:var(--green-m)}
+.ef-err{background:var(--red-l);border:1px solid #FECACA;border-radius:9px;padding:9px 13px;font-size:12px;color:var(--red);margin-bottom:12px;display:none}
+.ef-err.show{display:block}
+
+/* PLANILHA BADGE */
+.sheets-badge{display:inline-flex;align-items:center;gap:6px;background:#E8F5E9;border:1px solid #A5D6A7;border-radius:8px;padding:5px 12px;font-size:11px;color:#2E7D32;font-weight:500;margin-bottom:12px}
+
+/* HISTORICO */
+.hist-table{background:white;border-radius:16px;border:1px solid var(--border);overflow:hidden}
+.hist-header{display:grid;grid-template-columns:100px 1fr 80px 80px 80px 90px 80px;gap:10px;padding:12px 20px;background:var(--light);border-bottom:1px solid var(--border);font-size:10px;font-weight:600;color:var(--mid);letter-spacing:.8px;text-transform:uppercase}
+.hist-row{display:grid;grid-template-columns:100px 1fr 80px 80px 80px 90px 80px;gap:10px;padding:14px 20px;border-bottom:1px solid var(--border);font-size:12px;align-items:center;transition:background .15s}
+.hist-row:last-child{border:none}
+.hist-row:hover{background:var(--light)}
+.hist-row.freelancer-row{background:#F5F3FF}
+.hist-os{font-family:'Syne',sans-serif;font-weight:700;font-size:12px}
+
+/* RANKING */
+.ranking-list{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+.ranking-item{background:white;border-radius:14px;padding:16px 20px;border:1px solid var(--border);display:flex;align-items:center;gap:16px;transition:box-shadow .2s}
+.ranking-item.me{border-color:var(--orange);background:var(--orange-pale)}
+.ranking-pos{font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--mid);width:32px;text-align:center;flex-shrink:0}
+.ranking-pos.gold{color:#D97706}
+.ranking-pos.silver{color:#9CA3AF}
+.ranking-pos.bronze{color:#92400E}
+.ranking-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:white;flex-shrink:0}
+.ranking-info{flex:1}
+.ranking-name{font-weight:600;font-size:14px}
+.ranking-sub{font-size:11px;color:var(--mid)}
+.ranking-bar-wrap{flex:2;display:flex;align-items:center;gap:10px}
+.ranking-bar{height:6px;background:var(--light);border-radius:100px;flex:1;overflow:hidden}
+.ranking-bar-fill{height:100%;background:var(--orange);border-radius:100px;transition:width .6s ease}
+.ranking-num{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--dark);min-width:90px;text-align:right}
+
+/* BONUS/FINANCEIRO */
+.bonus-summary{background:white;border-radius:16px;border:1px solid var(--border);padding:28px;margin-bottom:20px}
+.bonus-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:20px}
+.bonus-item{background:var(--light);border-radius:12px;padding:18px;text-align:center}
+.bonus-item-val{font-family:'Syne',sans-serif;font-weight:800;font-size:28px;color:var(--dark);margin-bottom:4px}
+.bonus-item-val.orange{color:var(--orange)}
+.bonus-item-val.green{color:var(--green)}
+.bonus-item-label{font-size:11px;color:var(--mid)}
+
+/* EMPTY */
+.empty{text-align:center;padding:60px 20px}
+.empty-icon{font-size:48px;margin-bottom:16px;opacity:.4}
+.empty-title{font-family:'Syne',sans-serif;font-weight:700;font-size:18px;color:var(--dark);margin-bottom:8px}
+.empty-sub{font-size:13px;color:var(--mid)}
+
+/* TOAST */
+.toast{position:fixed;bottom:32px;right:32px;background:var(--dark);color:white;border-radius:14px;padding:16px 22px;font-size:13px;font-weight:500;z-index:999;transform:translateY(80px);opacity:0;transition:all .3s;max-width:340px;line-height:1.5;pointer-events:none}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.green{background:var(--green)}
+.toast.orange{background:var(--orange)}
+
+/* CONFIRM MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .3s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal-box{background:white;border-radius:20px;padding:36px;max-width:480px;width:100%;text-align:center;transform:scale(.95);transition:transform .3s}
+.modal-overlay.open .modal-box{transform:scale(1)}
+.modal-icon{font-size:44px;margin-bottom:16px}
+.modal-title{font-family:'Syne',sans-serif;font-weight:800;font-size:22px;margin-bottom:10px}
+.modal-desc{font-size:14px;color:var(--mid);line-height:1.6;margin-bottom:28px}
+.modal-actions{display:flex;gap:10px}
+.btn-modal{flex:1;padding:13px;border-radius:100px;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;border:none;cursor:pointer;transition:all .2s}
+.btn-modal.cancel{background:var(--light);color:var(--dark);border:1px solid var(--border)}
+.btn-modal.ok{background:var(--green);color:white}
+.btn-modal.ok:hover{background:var(--green-m)}
+
+/* RPS */
+.rps-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:600;display:flex;align-items:flex-start;justify-content:center;padding:40px 20px;opacity:0;pointer-events:none;transition:opacity .3s;overflow-y:auto}
+.rps-overlay.open{opacity:1;pointer-events:all}
+.rps-box{background:white;border-radius:20px;width:100%;max-width:580px;overflow:hidden;transform:scale(.97);transition:transform .3s}
+.rps-overlay.open .rps-box{transform:scale(1)}
+.rps-top{background:var(--dark);padding:20px 28px;display:flex;justify-content:space-between;align-items:center}
+
+@media(max-width:768px){
+  .stat-grid{grid-template-columns:1fr 1fr}
+  .main{padding:20px}
+  .topbar{padding:0 16px}
+  .nav-tabs{padding:0 16px}
+  .os-meta{display:none}
+  .ef-grid{grid-template-columns:1fr 1fr}
+  .bonus-grid{grid-template-columns:1fr}
+  .hist-header,.hist-row{grid-template-columns:90px 1fr 70px 70px 70px}
+  .hist-header span:nth-child(6),.hist-header span:nth-child(7),.hist-row span:nth-child(6),.hist-row span:nth-child(7){display:none}
+  .ranking-bar-wrap{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-wrap" id="loginWrap">
+  <div class="login-bg"></div>
+  <div class="login-grid"></div>
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-logo-mark">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <rect x="2" y="2" width="8" height="8" rx="2" fill="#F4630A"/>
+          <rect x="12" y="2" width="8" height="8" rx="2" fill="white" opacity="0.55"/>
+          <rect x="2" y="12" width="8" height="8" rx="2" fill="white" opacity="0.25"/>
+          <rect x="12" y="12" width="8" height="8" rx="2" fill="#24A865"/>
+        </svg>
+      </div>
+      <div><span class="login-brand">PREP AT HOME</span><span class="login-sub">Painel do Líder</span></div>
+    </div>
+    <div class="login-title">Bem-vindo de volta</div>
+    <div class="login-desc">Acesse com suas credenciais de líder técnico</div>
+    <div class="login-err" id="loginErr">Usuário ou senha incorretos. Tente novamente.</div>
+    <div class="lf-group"><label class="lf-label">Usuário</label><input type="text" class="lf-input" id="lUsername" placeholder="nome.sobrenome" autocomplete="username"/></div>
+    <div class="lf-group"><label class="lf-label">Senha</label><input type="password" class="lf-input" id="lPassword" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+    <button class="btn-login" onclick="doLogin()">Entrar no painel →</button>
+    <div class="login-note">Não tem acesso? Fale com a coordenação Prep at Home.<br>
+    <span style="opacity:.6;font-size:10px">⚠️ Em produção: login integrado ao Multifoco</span></div>
+  </div>
+</div>
+
+<!-- TELA TROCA DE SENHA — 1º ACESSO -->
+<div class="senha-wrap" id="senhaWrap">
+  <div class="login-bg"></div>
+  <div class="login-grid"></div>
+  <div class="senha-box">
+    <div class="login-logo">
+      <div class="login-logo-mark">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <rect x="2" y="2" width="8" height="8" rx="2" fill="#F4630A"/>
+          <rect x="12" y="2" width="8" height="8" rx="2" fill="white" opacity="0.55"/>
+          <rect x="2" y="12" width="8" height="8" rx="2" fill="white" opacity="0.25"/>
+          <rect x="12" y="12" width="8" height="8" rx="2" fill="#24A865"/>
+        </svg>
+      </div>
+      <div><span class="login-brand">PREP AT HOME</span><span class="login-sub">Painel do Líder</span></div>
+    </div>
+    <div class="senha-badge">
+      <strong>🔐 Primeiro acesso detectado</strong>
+      Você está usando a senha padrão. Por segurança, crie uma senha pessoal antes de continuar.
+    </div>
+    <div class="login-title" style="font-size:22px">Crie sua senha pessoal</div>
+    <div class="login-desc">Apenas você terá acesso ao seu painel com essa senha.</div>
+    <div class="senha-err" id="senhaErr1"></div>
+    <div class="lf-group">
+      <label class="lf-label">Nova senha</label>
+      <div style="position:relative">
+        <input type="password" class="lf-input" id="novaSenha1" placeholder="Mínimo 6 caracteres" oninput="atualizarForca('novaSenha1','forca1','forcaLabel1')" onkeydown="if(event.key==='Enter')confirmarNovaSenha()"/>
+        <button onclick="toggleVer('novaSenha1',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:rgba(255,255,255,.4);font-size:15px">👁</button>
+      </div>
+      <div style="margin-top:8px;height:4px;background:rgba(255,255,255,.1);border-radius:100px;overflow:hidden">
+        <div id="forca1" style="height:100%;border-radius:100px;width:0;transition:width .3s,background .3s"></div>
+      </div>
+      <div id="forcaLabel1" style="font-size:10px;color:rgba(255,255,255,.3);margin-top:4px"> </div>
+    </div>
+    <div class="lf-group">
+      <label class="lf-label">Confirme a nova senha</label>
+      <div style="position:relative">
+        <input type="password" class="lf-input" id="confirmaSenha1" placeholder="Repita a senha" onkeydown="if(event.key==='Enter')confirmarNovaSenha()"/>
+        <button onclick="toggleVer('confirmaSenha1',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:rgba(255,255,255,.4);font-size:15px">👁</button>
+      </div>
+    </div>
+    <ul class="senha-req">
+      <li>Mínimo 6 caracteres</li>
+      <li>Evite sequências óbvias (123456, abcdef)</li>
+      <li>Não compartilhe com outros líderes</li>
+    </ul>
+    <button class="btn-login" style="margin-top:20px" onclick="confirmarNovaSenha()">Criar senha e entrar →</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="appWrap">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-logo-mark">
+        <svg width="18" height="18" viewBox="0 0 22 22" fill="none">
+          <rect x="2" y="2" width="8" height="8" rx="2" fill="#F4630A"/>
+          <rect x="12" y="2" width="8" height="8" rx="2" fill="white" opacity="0.55"/>
+          <rect x="2" y="12" width="8" height="8" rx="2" fill="white" opacity="0.25"/>
+          <rect x="12" y="12" width="8" height="8" rx="2" fill="#24A865"/>
+        </svg>
+      </div>
+      <div><span class="topbar-brand">PREP AT HOME</span><span class="topbar-sub">Painel do Líder</span></div>
+    </div>
+    <div class="topbar-right">
+      <div class="leader-chip">
+        <div class="leader-avatar" id="leaderAvatar">TH</div>
+        <span class="leader-name" id="leaderNameTop">Líder</span>
+      </div>
+      <div id="sourceBadge" class="source-badge loading" style="cursor:pointer" onclick="abrirDebug()" title="Ver retorno das APIs">
+        <div class="source-dot pulse"></div>
+        <span id="sourceTxt">Carregando…</span>
+      </div>
+      <button class="btn-senha" id="btnAlterarSenha" onclick="abrirModalSenha()">🔑 Alterar senha</button>
+      <button class="btn-logout" onclick="doLogout()">Sair</button>
+    </div>
+  </div>
+
+  <div class="nav-tabs">
+    <div class="nav-tab active" onclick="goPage('dashboard')" id="tab-dashboard">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </div>
+    <div class="nav-tab" onclick="goPage('minhas-os')" id="tab-minhas-os">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/></svg>
+      Minhas OS <span class="tab-badge" id="osBadge">0</span>
+    </div>
+    <div class="nav-tab" onclick="goPage('historico')" id="tab-historico">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Histórico
+    </div>
+    <div class="nav-tab" onclick="goPage('ranking')" id="tab-ranking">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="18 20 18 10"/><polyline points="12 20 12 4"/><polyline points="6 20 6 14"/></svg>
+      Ranking
+    </div>
+    <div class="nav-tab" onclick="goPage('bonus')" id="tab-bonus">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>
+      Meu Bônus
+    </div>
+    <div class="nav-tab" onclick="goPage('financeiro')" id="tab-financeiro">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+      Financeiro &amp; NF
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div style="margin-bottom:28px">
+        <h2 style="font-size:22px;font-weight:800;letter-spacing:-.5px;margin-bottom:4px" id="dashGreeting">Olá!</h2>
+        <p style="font-size:13px;color:var(--mid)" id="dashDate">—</p>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-card orange"><div class="stat-label">OSs em aberto</div><div class="stat-value" id="dStat1">0</div><div class="stat-sub">aguardando execução</div></div>
+        <div class="stat-card"><div class="stat-label">OSs encerradas no mês</div><div class="stat-value" id="dStat2">0</div><div class="stat-sub">líder + freelancer</div></div>
+        <div class="stat-card green"><div class="stat-label">Itens preparados no mês</div><div class="stat-value" id="dStat3">0</div><div class="stat-sub">total produzido</div></div>
+        <div class="stat-card navy"><div class="stat-label">A receber este mês</div><div class="stat-value" id="dStat4">R$0</div><div class="stat-sub">base + bônus</div></div>
+      </div>
+      <div class="section-header"><h3 class="section-title">OSs da semana</h3></div>
+      <div class="os-list" id="dashOsList"></div>
+    </div>
+
+    <!-- MINHAS OS -->
+    <div class="page" id="page-minhas-os">
+      <div style="margin-bottom:24px">
+        <h2 style="font-size:22px;font-weight:800;letter-spacing:-.5px;margin-bottom:4px">Minhas OSs em aberto</h2>
+        <p style="font-size:13px;color:var(--mid)">OSs do Multifoco atribuídas a você como líder</p>
+      </div>
+      <div class="os-list" id="osAbertoList"></div>
+    </div>
+
+    <!-- HISTÓRICO -->
+    <div class="page" id="page-historico">
+      <div style="margin-bottom:24px">
+        <h2 style="font-size:22px;font-weight:800;letter-spacing:-.5px;margin-bottom:4px">Histórico de OSs</h2>
+        <p style="font-size:13px;color:var(--mid)">Todas as OSs encerradas — como líder e como freelancer</p>
+      </div>
+      <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--mid)"><div style="width:12px;height:12px;background:var(--green-l);border-radius:3px;border:1px solid rgba(26,122,74,.2)"></div>Como líder</div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--mid)"><div style="width:12px;height:12px;background:#F5F3FF;border-radius:3px;border:1px solid rgba(91,33,182,.15)"></div>Como freelancer</div>
+      </div>
+      <div class="hist-table">
+        <div class="hist-header"><span>OS Multifoco</span><span>Seller</span><span>Data</span><span>Itens</span><span>Horas</span><span>Itens/h</span><span>Função</span></div>
+        <div id="histBody"></div>
+      </div>
+    </div>
+
+    <!-- RANKING -->
+    <div class="page" id="page-ranking">
+      <div style="margin-bottom:24px">
+        <h2 style="font-size:22px;font-weight:800;letter-spacing:-.5px;margin-bottom:4px">Ranking de Produção</h2>
+        <p style="font-size:13px;color:var(--mid)">Líderes ordenados por <strong>média de itens por hora</strong> neste mês — considera o histórico de cada seller</p>
+      </div>
+      <div style="background:var(--navy);border-radius:14px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;gap:12px">
+        <span style="font-size:20px">📊</span>
+        <div style="font-size:12px;color:rgba(255,255,255,.7);line-height:1.5">A métrica é <strong style="color:white">itens preparados ÷ horas trabalhadas</strong>. Sellers com mais SKUs naturalmente produzem menos por hora — isso já está normalizado pelo histórico de cada cliente.</div>
+      </div>
+      <div class="ranking-list" id="rankingList"></div>
+    </div>
+
+    <!-- BÔNUS -->
+    <div class="page" id="page-bonus">
+      <div style="margin-bottom:24px">
+        <h2 style="font-size:22px;font-weight:800;letter-spacing:-.5px;margin-bottom:4px">Meu Bônus</h2>
+        <p style="font-size:13px;color:var(--mid)">Bônus de R$60 por OS encerrada sem erros e sem intercorrências</p>
+      </div>
+      <div class="bonus-summary">
+        <h3 style="font-size:16px;font-weight:700;margin-bottom:6px">Como funciona</h3>
+        <p style="font-size:13px;color:var(--mid);line-height:1.6">Você recebe <strong>R$60 extras</strong> por cada OS encerrada sem erros de etiquetagem e sem problemas com o seller. Apenas as OSs em que você atuou como <strong>líder técnico</strong> geram bônus.</p>
+        <div class="bonus-grid">
+          <div class="bonus-item"><div class="bonus-item-val" id="bvTotal">0</div><div class="bonus-item-label">OSs como líder no mês</div></div>
+          <div class="bonus-item"><div class="bonus-item-val orange" id="bvBonus">0</div><div class="bonus-item-label">OSs com bônus (sem erro)</div></div>
+          <div class="bonus-item"><div class="bonus-item-val green" id="bvTotalR">R$0</div><div class="bonus-item-label">Bônus acumulado</div></div>
+        </div>
+      </div>
+      <div class="section-header"><h3 class="section-title">Detalhamento</h3></div>
+      <div class="hist-table" style="margin-top:12px">
+        <div class="hist-header"><span>OS Multifoco</span><span>Seller</span><span>Data</span><span>Itens</span><span>Horas</span><span>Itens/h</span><span>Bônus</span></div>
+        <div id="bonusHistBody"></div>
+      </div>
+    </div>
+
+    <!-- FINANCEIRO & NF -->
+    <div class="page" id="page-financeiro">
+      <div style="margin-bottom:24px">
+        <h2 style="font-size:22px;font-weight:800;letter-spacing:-.5px;margin-bottom:4px">Financeiro &amp; Nota Fiscal</h2>
+        <p style="font-size:13px;color:var(--mid)">RPS por OS e controle da NF mensal MEI — líder + participações como freelancer</p>
+      </div>
+      <div class="bonus-summary" id="finResumo"></div>
+      <div style="background:white;border-radius:16px;border:1px solid var(--border);padding:28px;margin-top:20px">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:20px">
+          <div>
+            <h3 style="font-size:16px;font-weight:700;margin-bottom:4px">Nota Fiscal — <span id="nfMesLabel">—</span></h3>
+            <p style="font-size:12px;color:var(--mid);line-height:1.5">Envie a NF de MEI até o 5º dia útil do mês seguinte para <strong>contato.prepathome@gmail.com</strong>.<br>Assunto: <strong>NF [mês/ano] — [seu nome]</strong></p>
+          </div>
+          <div id="nfStatusBadge"></div>
+        </div>
+        <div id="nfActions"></div>
+      </div>
+      <div style="margin-top:28px">
+        <div class="section-header" style="margin-bottom:14px"><h3 class="section-title">Histórico de NFs anteriores</h3></div>
+        <div id="nfHistorico"></div>
+      </div>
+      <div style="margin-top:28px">
+        <div class="section-header" style="margin-bottom:14px">
+          <h3 class="section-title">RPS por OS</h3>
+          <span style="font-size:12px;color:var(--mid)">OSs encerradas este mês</span>
+        </div>
+        <div id="rpsLista"></div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- LOADING OVERLAY -->
+<div class="load-overlay hidden" id="loadOverlay">
+  <div class="load-spinner"></div>
+  <div style="text-align:center">
+    <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px;color:white;margin-bottom:6px">Carregando dados reais</div>
+    <div class="load-msg">Conectando às APIs…</div>
+  </div>
+  <div class="load-steps">
+    <div class="load-step" id="lstep0"><span class="load-step-icon">⏳</span>Buscando OSs no Multifoco…</div>
+    <div class="load-step" id="lstep1"><span class="load-step-icon">⏳</span>Lendo planilha de pagamentos…</div>
+    <div class="load-step" id="lstep2"><span class="load-step-icon">⏳</span>Processando dados…</div>
+  </div>
+</div>
+
+<!-- DEBUG MODAL -->
+<div class="debug-overlay" id="debugOverlay">
+  <div class="debug-box">
+    <div class="debug-top">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:white">🔬 Debug — Retorno das APIs</div>
+      <button onclick="fecharDebug()" style="background:rgba(255,255,255,.1);border:none;color:white;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:13px">✕</button>
+    </div>
+    <div class="debug-tabs">
+      <div class="debug-tab active" onclick="debugTab(0)" id="dtab0">Multifoco /calendar</div>
+      <div class="debug-tab" onclick="debugTab(1)" id="dtab1">Multifoco /service-orders</div>
+      <div class="debug-tab" onclick="debugTab(2)" id="dtab2">Google Sheets</div>
+    </div>
+    <div class="debug-content" id="debugContent"></div>
+  </div>
+</div>
+
+<!-- RPS MODAL -->
+<div class="rps-overlay" id="rpsOverlay">
+  <div class="rps-box">
+    <div class="rps-top">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:white">🧾 RPS — Recibo de Prestação de Serviço</div>
+      <button onclick="fecharRPS()" style="background:rgba(255,255,255,.1);border:none;color:white;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:13px">✕</button>
+    </div>
+    <div id="rpsContent" style="padding:28px"></div>
+    <div style="padding:16px 28px;border-top:1px solid var(--border);display:flex;gap:10px">
+      <button onclick="imprimirRPS()" style="flex:1;padding:12px;border-radius:100px;background:var(--dark);color:white;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;border:none;cursor:pointer">🖨️ Imprimir / Salvar PDF</button>
+      <button onclick="fecharRPS()" style="padding:12px 20px;border-radius:100px;background:var(--light);color:var(--dark);border:1px solid var(--border);cursor:pointer;font-size:13px">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ALTERAR SENHA (dentro do app) -->
+<div class="senha-modal-overlay" id="senhaModalOverlay">
+  <div class="senha-modal-box">
+    <div class="senha-modal-title">🔑 Alterar senha</div>
+    <div class="senha-modal-sub">Por segurança, confirme sua senha atual antes de definir uma nova.</div>
+    <div class="sm-err" id="smErr"></div>
+    <div class="sm-group">
+      <label class="sm-label">Senha atual</label>
+      <div class="sm-input-wrap">
+        <input type="password" class="sm-input" id="smAtual" placeholder="••••••••"/>
+        <button class="sm-eye" onclick="toggleVer('smAtual',this)">👁</button>
+      </div>
+    </div>
+    <div class="sm-group">
+      <label class="sm-label">Nova senha</label>
+      <div class="sm-input-wrap">
+        <input type="password" class="sm-input" id="smNova" placeholder="Mínimo 6 caracteres" oninput="atualizarForca('smNova','smForcaFill','smForcaTxt')"/>
+        <button class="sm-eye" onclick="toggleVer('smNova',this)">👁</button>
+      </div>
+      <div class="sm-strength-wrap">
+        <div class="sm-strength-bar"><div class="sm-strength-fill" id="smForcaFill"></div></div>
+        <span class="sm-strength-label" id="smForcaTxt"> </span>
+      </div>
+    </div>
+    <div class="sm-group">
+      <label class="sm-label">Confirmar nova senha</label>
+      <div class="sm-input-wrap">
+        <input type="password" class="sm-input" id="smConfirma" placeholder="Repita a nova senha" onkeydown="if(event.key==='Enter')salvarNovaSenha()"/>
+        <button class="sm-eye" onclick="toggleVer('smConfirma',this)">👁</button>
+      </div>
+    </div>
+    <div class="sm-actions">
+      <button class="btn-sm cancel" onclick="fecharModalSenha()">Cancelar</button>
+      <button class="btn-sm ok" onclick="salvarNovaSenha()">Salvar nova senha</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="modal-overlay" id="confirmOverlay">
+  <div class="modal-box">
+    <div class="modal-icon" id="confirmIcon">✅</div>
+    <div class="modal-title" id="confirmTitle">Encerrar OS?</div>
+    <div class="modal-desc" id="confirmDesc">Confirme os volumes antes de prosseguir.</div>
+    <div class="modal-actions">
+      <button class="btn-modal cancel" onclick="closeConfirm()">Cancelar</button>
+      <button class="btn-modal ok" id="confirmOkBtn">Confirmar encerramento</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ════════════════════════════════════════════════════
+   ⚙️  CONFIGURAÇÕES GERAIS
+════════════════════════════════════════════════════ */
+const BONUS_POR_OS = 60;   // R$ bônus por OS sem erro
+const HC_HORA      = 10;   // R$ por hora por agente (remuneração interna)
+
+/* ════════════════════════════════════════════════════
+   👥  13 LÍDERES CADASTRADOS
+   usuario: primeiro nome em minúsculas
+   senha:   prep2025 (padrão — mudar individualmente)
+   cor:     avatar color hex
+
+   ⚠️  BACKLOG: Em produção, autenticar via API Multifoco
+   usando as mesmas credenciais do app, eliminando
+   cadastro paralelo e tela de login própria.
+════════════════════════════════════════════════════ */
+const LIDERES = [
+  { id:'maycon',    usuario:'maycon',    senha:'prep2025', nome:'Maycon Prado',                        cor:'#F4630A' },
+  { id:'guthierry', usuario:'guthierry', senha:'prep2025', nome:'Guthierry Nascimento Momesso',        cor:'#1A7A4A' },
+  { id:'sarah',     usuario:'sarah',     senha:'prep2025', nome:'Sarah Joyce Rodrigues de Santana',    cor:'#7C3AED' },
+  { id:'carlos',    usuario:'carlos',    senha:'prep2025', nome:'Carlos Eduardo de Souza Trovatti',    cor:'#0F2D4A' },
+  { id:'giovanna',  usuario:'giovanna',  senha:'prep2025', nome:'Giovanna Gomes de Oliveira',          cor:'#DB2777' },
+  { id:'aghata',    usuario:'aghata',    senha:'prep2025', nome:'Aghata Christiley Silva',             cor:'#059669' },
+  { id:'richard',   usuario:'richard',   senha:'prep2025', nome:'Richard Pires de Campos Souza',       cor:'#D97706' },
+  { id:'tamyres',   usuario:'tamyres',   senha:'prep2025', nome:'Tamyres Aparecida Santos de Farias',  cor:'#BE185D' },
+  { id:'nicolas',   usuario:'nicolas',   senha:'prep2025', nome:'Nicolas de Lima Silva',               cor:'#0369A1' },
+  { id:'thaylla',   usuario:'thaylla',   senha:'prep2025', nome:'Thaylla Ramos Silva',                 cor:'#7E22CE' },
+  { id:'renan',     usuario:'renan',     senha:'prep2025', nome:'Renan de Souza Rodrigues',            cor:'#B45309' },
+  { id:'dyego',     usuario:'dyego',     senha:'prep2025', nome:'Dyego Paulino de Oliveira',           cor:'#0F766E' },
+  { id:'ester',     usuario:'ester',     senha:'prep2025', nome:'Ester da Silva Brandão Campos',       cor:'#9D174D' },
+];
+
+/* ════════════════════════════════════════════════════
+   📋  OSs DE DEMONSTRAÇÃO
+   Estrutura real esperada da API Multifoco:
+   - num:  número real da OS no Multifoco (ex: "OS #579")
+   - tipo: 'lider' | 'freelancer'
+   - lider_dono: id do líder dono da OS (quando tipo='freelancer')
+
+   ⚠️  BACKLOG — Ponto 2: Em produção, estas OSs virão
+   da API Multifoco filtradas pelo técnico logado.
+   GET /v1/calendar?technician={id}&status=open
+
+   ⚠️  BACKLOG — Ponto 3: Horas (horaInicio, horaFim,
+   pausaMin) virão da planilha Google Sheets via API:
+   GET Sheets API → aba "Ptgos" → filtrar por nome do líder
+════════════════════════════════════════════════════ */
+const OS_DEMO = [
+  {
+    id:'os001', num:'OS #591', lider:'maycon', tipo:'lider',
+    empresa:'AMR Store', cod:'8.018', marketplace:'Amazon FBA',
+    data:'2026-04-20', endereco:'Av. Industrial, 456 — Guarulhos',
+    regiao:'Guarulhos',
+    previsto:{ et3:800, et6:200, etP:0, k3:100, k6:0, pal:2, skus:12 },
+    status:'aberta', obs:'Cuidado com embalagens eletrônicas',
+    /* BACKLOG Ponto 3: estes dados virão da planilha */
+    planilha:{ horaInicio:'07:52', horaFim:'16:38', pausaMin:30, transporte:5.30, lanche:10.00, metaAplicavel:true }
+  },
+  {
+    id:'os002', num:'OS #582', lider:'maycon', tipo:'lider',
+    empresa:'UpShop', cod:'8.008', marketplace:'Mercado Livre Full',
+    data:'2026-04-23', endereco:'Rua das Flores, 99 — Zona Sul SP',
+    regiao:'Zona Sul — SP',
+    previsto:{ et3:500, et6:0, etP:0, k3:300, k6:100, pal:0, skus:8 },
+    status:'aberta', obs:'',
+    planilha:{ horaInicio:'07:31', horaFim:'16:03', pausaMin:30, transporte:10.60, lanche:10.00, metaAplicavel:false }
+  },
+  /* OS como FREELANCER (maycon foi em OS de outro líder) */
+  {
+    id:'os003', num:'OS #587', lider:'sarah', tipo:'freelancer',
+    lider_dono:'sarah',
+    empresa:'Na Web', cod:'8.013', marketplace:'Amazon FBA',
+    data:'2026-04-14', endereco:'Rua XV de Novembro — Cajamar',
+    regiao:'Cajamar',
+    previsto:{ et3:600, et6:0, etP:0, k3:0, k6:0, pal:0, skus:5 },
+    status:'encerrada',
+    real:{ et3:580, et6:0, etP:0, k3:0, k6:0, pal:0, skus:5, obs:'Tudo ok', bonus:false, horas:6, agentes:1 },
+    planilha:{ horaInicio:'08:10', horaFim:'17:06', pausaMin:30, transporte:5.30, lanche:10.00, metaAplicavel:true }
+  },
+  /* OSs encerradas como líder */
+  {
+    id:'os004', num:'OS #579', lider:'maycon', tipo:'lider',
+    empresa:'TechBras', cod:'10.012', marketplace:'Amazon FBA',
+    data:'2026-04-10', endereco:'Rua XV de Novembro — Jundiaí',
+    regiao:'Jundiaí',
+    previsto:{ et3:1200, et6:0, etP:0, k3:0, k6:0, pal:4, skus:3 },
+    status:'encerrada',
+    real:{ et3:1150, et6:0, etP:0, k3:0, k6:0, pal:4, skus:3, obs:'Leve atraso no acesso', bonus:true, horas:8, agentes:3 },
+    planilha:{ horaInicio:'07:30', horaFim:'21:48', pausaMin:30, transporte:10.60, lanche:10.00, metaAplicavel:true }
+  },
+  {
+    id:'os005', num:'OS #543', lider:'maycon', tipo:'lider',
+    empresa:'Cosmo Beauty', cod:'8.051', marketplace:'Shopee Full',
+    data:'2026-04-07', endereco:'Rua Bela Vista — Cotia',
+    regiao:'Cotia',
+    previsto:{ et3:400, et6:100, etP:0, k3:200, k6:0, pal:1, skus:22 },
+    status:'encerrada',
+    real:{ et3:420, et6:95, etP:0, k3:210, k6:0, pal:1, skus:22, obs:'', bonus:false, horas:7, agentes:2 },
+    planilha:{ horaInicio:'07:30', horaFim:'21:48', pausaMin:30, transporte:10.60, lanche:10.00, metaAplicavel:false }
+  },
+];
+
+/* ════════════════════════════════════════════════════
+   RANKING DEMO — médias dos outros líderes (itens/hora)
+   ⚠️  BACKLOG Ponto 5: Em produção virá da planilha
+   Google Sheets — coluna PROD_HORA / MEDIA
+════════════════════════════════════════════════════ */
+const RANKING_DEMO = [
+  { id:'guthierry', mediaItensHora:42, totalItens:18500, totalHoras:440 },
+  { id:'richard',   mediaItensHora:38, totalItens:14200, totalHoras:374 },
+  { id:'sarah',     mediaItensHora:35, totalItens:11800, totalHoras:337 },
+  { id:'carlos',    mediaItensHora:31, totalItens:9600,  totalHoras:310 },
+  { id:'tamyres',   mediaItensHora:28, totalItens:8400,  totalHoras:300 },
+  { id:'giovanna',  mediaItensHora:26, totalItens:7800,  totalHoras:300 },
+  { id:'nicolas',   mediaItensHora:25, totalItens:7500,  totalHoras:300 },
+  { id:'aghata',    mediaItensHora:20, totalItens:6000,  totalHoras:300 },
+  { id:'dyego',     mediaItensHora:18, totalItens:5400,  totalHoras:300 },
+  { id:'renan',     mediaItensHora:16, totalItens:4800,  totalHoras:300 },
+  { id:'thaylla',   mediaItensHora:14, totalItens:4200,  totalHoras:300 },
+  { id:'ester',     mediaItensHora:12, totalItens:3600,  totalHoras:300 },
+];
+
+/* ═══ STATE ═══ */
+let currentLider = null;
+let pendingConfirm = null;
+let osData = [...OS_DEMO];
+let bonusSelections = {};
+
+/* ═══ UTILS ═══ */
+function initials(n){ return n.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
+function fmtR(v){ return 'R$\u202f'+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function totalItens(r){ return (r.et3||0)+(r.et6||0)+(r.etP||0)+(r.k3||0)+(r.k6||0); }
+function calcValorOs(os){
+  if(!os.real) return 0;
+  const base = (os.real.horas||0) * (os.real.agentes||1) * HC_HORA;
+  const bonus = (os.tipo==='lider' && os.real.bonus) ? BONUS_POR_OS : 0;
+  return base + bonus;
+}
+function mediaItensHora(osList){
+  const enc = osList.filter(o=>o.status==='encerrada'&&o.real);
+  const ti = enc.reduce((s,o)=>s+totalItens(o.real),0);
+  const th = enc.reduce((s,o)=>s+(o.real.horas||0),0);
+  return th>0 ? Math.round(ti/th) : 0;
+}
+
+/* ═══════════════════════════════════════════════════
+   🔐  SISTEMA DE SENHAS — localStorage
+   Chave: pah_pwd_{liderId}
+   Valor: senha definida pelo líder (texto simples por ora)
+   Se a chave não existe → líder ainda usa senha padrão
+   Em produção: substituir por hash (bcrypt via backend)
+═══════════════════════════════════════════════════ */
+const SENHA_PADRAO = 'prep2025';
+function getSenha(id){ return localStorage.getItem('pah_pwd_'+id) || SENHA_PADRAO; }
+function setSenha(id, s){ localStorage.setItem('pah_pwd_'+id, s); }
+function isPrimeirAcesso(id){ return !localStorage.getItem('pah_pwd_'+id); }
+
+/* ═══ FORÇA DA SENHA ═══ */
+function calcForca(s){
+  if(s.length < 4) return {nivel:0, label:'Muito fraca', cor:'#D83B3B', pct:10};
+  if(s.length < 6) return {nivel:1, label:'Fraca', cor:'#F59E0B', pct:30};
+  const t = (s.length>=8?1:0) + (/[A-Z]/.test(s)?1:0) + (/[0-9]/.test(s)?1:0) + (/[^a-zA-Z0-9]/.test(s)?1:0);
+  if(t<=1) return {nivel:2, label:'Razoável', cor:'#F59E0B', pct:50};
+  if(t===2) return {nivel:3, label:'Boa', cor:'#24A865', pct:75};
+  return {nivel:4, label:'Forte 💪', cor:'#1A7A4A', pct:100};
+}
+function atualizarForca(inputId, barId, labelId){
+  const s=document.getElementById(inputId)?.value||'';
+  const f=calcForca(s);
+  const bar=document.getElementById(barId);
+  const lbl=document.getElementById(labelId);
+  if(bar){ bar.style.width=f.pct+'%'; bar.style.background=f.cor; }
+  if(lbl){ lbl.textContent=s.length>0?f.label:' '; lbl.style.color=f.cor; }
+}
+
+/* ═══ TOGGLE VER SENHA ═══ */
+function toggleVer(inputId, btn){
+  const el=document.getElementById(inputId);
+  if(!el)return;
+  el.type = el.type==='password' ? 'text' : 'password';
+  btn.textContent = el.type==='password' ? '👁' : '🙈';
+}
+
+/* ═══ AUTH ═══ */
+function doLogin(){
+  const u=document.getElementById('lUsername').value.trim().toLowerCase();
+  const p=document.getElementById('lPassword').value;
+  const err=document.getElementById('loginErr');
+  const lider=LIDERES.find(l=>l.usuario===u);
+  if(!lider || getSenha(lider.id)!==p){
+    err.classList.add('show');
+    setTimeout(()=>err.classList.remove('show'),4000);
+    return;
+  }
+  currentLider=lider;
+  err.classList.remove('show');
+  // Primeiro acesso → forçar troca de senha
+  if(isPrimeirAcesso(lider.id)){
+    document.getElementById('loginWrap').style.display='none';
+    document.getElementById('senhaWrap').classList.add('visible');
+    return;
+  }
+  entrarNoApp();
+}
+
+function confirmarNovaSenha(){
+  const nova=document.getElementById('novaSenha1').value;
+  const conf=document.getElementById('confirmaSenha1').value;
+  const err=document.getElementById('senhaErr1');
+  const mostrar=(m)=>{ err.textContent=m; err.classList.add('show'); setTimeout(()=>err.classList.remove('show'),4000); };
+  if(nova.length<6) return mostrar('A senha deve ter pelo menos 6 caracteres.');
+  if(nova===SENHA_PADRAO) return mostrar('Não use a senha padrão como nova senha.');
+  if(nova!==conf) return mostrar('As senhas não coincidem. Tente novamente.');
+  setSenha(currentLider.id, nova);
+  document.getElementById('senhaWrap').classList.remove('visible');
+  entrarNoApp();
+  showToast('🔐 Senha criada com sucesso! Bem-vindo ao painel.','green');
+}
+
+function entrarNoApp(){
+  document.getElementById('loginWrap').style.display='none';
+  document.getElementById('senhaWrap').classList.remove('visible');
+  document.getElementById('appWrap').classList.add('visible');
+  document.getElementById('leaderAvatar').textContent=initials(currentLider.nome);
+  document.getElementById('leaderAvatar').style.background=currentLider.cor;
+  document.getElementById('leaderNameTop').textContent=currentLider.nome.split(' ')[0]+' '+currentLider.nome.split(' ').pop();
+  // Botão muda aparência se senha já foi personalizada
+  const btn=document.getElementById('btnAlterarSenha');
+  btn.className=isPrimeirAcesso(currentLider.id)?'btn-senha':'btn-senha segura';
+  btn.innerHTML=isPrimeirAcesso(currentLider.id)?'🔑 Alterar senha':'🔒 Alterar senha';
+  // Carregar dados reais do Multifoco + Planilha
+  carregarDadosReais();
+  initApp();
+}
+
+function doLogout(){
+  currentLider=null;
+  document.getElementById('loginWrap').style.display='flex';
+  document.getElementById('appWrap').classList.remove('visible');
+  document.getElementById('senhaWrap').classList.remove('visible');
+  document.getElementById('lUsername').value='';
+  document.getElementById('lPassword').value='';
+  document.getElementById('novaSenha1').value='';
+  document.getElementById('confirmaSenha1').value='';
+}
+
+/* ═══ MODAL ALTERAR SENHA (dentro do app) ═══ */
+function abrirModalSenha(){
+  document.getElementById('smAtual').value='';
+  document.getElementById('smNova').value='';
+  document.getElementById('smConfirma').value='';
+  document.getElementById('smErr').classList.remove('show');
+  const fill=document.getElementById('smForcaFill');
+  if(fill){ fill.style.width='0'; }
+  document.getElementById('smForcaTxt').textContent=' ';
+  document.getElementById('senhaModalOverlay').classList.add('open');
+}
+function fecharModalSenha(){ document.getElementById('senhaModalOverlay').classList.remove('open'); }
+function salvarNovaSenha(){
+  const atual=document.getElementById('smAtual').value;
+  const nova=document.getElementById('smNova').value;
+  const conf=document.getElementById('smConfirma').value;
+  const err=document.getElementById('smErr');
+  const mostrar=(m)=>{ err.textContent=m; err.classList.add('show'); setTimeout(()=>err.classList.remove('show'),4000); };
+  if(getSenha(currentLider.id)!==atual) return mostrar('Senha atual incorreta.');
+  if(nova.length<6) return mostrar('A nova senha deve ter pelo menos 6 caracteres.');
+  if(nova===SENHA_PADRAO) return mostrar('Não use a senha padrão como nova senha.');
+  if(nova!==conf) return mostrar('A confirmação não coincide com a nova senha.');
+  setSenha(currentLider.id, nova);
+  fecharModalSenha();
+  // Atualiza visual do botão
+  const btn=document.getElementById('btnAlterarSenha');
+  btn.className='btn-senha segura';
+  btn.innerHTML='🔒 Alterar senha';
+  showToast('🔒 Senha alterada com sucesso!','green');
+}
+
+/* ═══ NAVIGATION ═══ */
+function goPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.getElementById('tab-'+id).classList.add('active');
+  if(id==='financeiro') renderFinanceiro();
+  if(id==='ranking')    renderRanking();
+  if(id==='bonus')      renderBonus();
+  if(id==='historico')  renderHistorico();
+}
+
+/* ═══ INIT ═══ */
+function initApp(){
+  const now=new Date();
+  const h=now.getHours();
+  document.getElementById('dashGreeting').textContent=(h<12?'Bom dia':h<18?'Boa tarde':'Boa noite')+', '+currentLider.nome.split(' ')[0]+'! 👋';
+  document.getElementById('dashDate').textContent=now.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+  // OSs onde o líder participou (líder OU freelancer)
+  const minhasOS = osData.filter(o=>o.lider===currentLider.id||(o.tipo==='freelancer'&&o.lider===currentLider.id));
+  const abertas  = osData.filter(o=>o.lider===currentLider.id&&o.status==='aberta'&&o.tipo==='lider');
+  const mesAtual = now.toISOString().slice(0,7);
+  const encMes   = minhasOS.filter(o=>o.status==='encerrada'&&o.data.startsWith(mesAtual));
+  const itensMes = encMes.reduce((s,o)=>s+totalItens(o.real||{}),0);
+  const totalR   = encMes.reduce((s,o)=>s+calcValorOs(o),0);
+
+  document.getElementById('dStat1').textContent=abertas.length;
+  document.getElementById('dStat2').textContent=encMes.length;
+  document.getElementById('dStat3').textContent=itensMes.toLocaleString('pt-BR');
+  document.getElementById('dStat4').textContent=fmtR(totalR);
+  document.getElementById('osBadge').textContent=abertas.length;
+
+  renderOsList('dashOsList', [...abertas, ...encMes.slice(0,2)]);
+  renderOsList('osAbertoList', abertas);
+}
+
+/* ═══ OS CARDS ═══ */
+function renderOsList(cid, list){
+  const c=document.getElementById(cid);
+  if(!list.length){ c.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">Nenhuma OS por aqui</div><div class="empty-sub">OSs agendadas aparecerão aqui assim que criadas no Multifoco.</div></div>`; return; }
+  c.innerHTML=list.map(os=>renderOsCard(os)).join('');
+}
+function renderOsCard(os){
+  const enc=os.status==='encerrada';
+  const isFreelancer=os.tipo==='freelancer';
+  const dataFmt=new Date(os.data+'T12:00:00').toLocaleDateString('pt-BR');
+  const prevItens=totalItens(os.previsto);
+  return `<div class="os-card${isFreelancer?' freelancer-card':''}" id="card-${os.id}">
+    <div class="os-card-header" onclick="toggleOs('${os.id}')">
+      <div class="os-card-left">
+        <div class="os-status-dot ${os.status}"></div>
+        <div>
+          <div class="os-num">${os.num}${isFreelancer?' <span style="font-size:10px;color:#5B21B6;font-weight:600">· freelancer</span>':''}</div>
+          <div class="os-empresa">${os.cod} — ${os.empresa}</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+        <div class="os-meta">
+          <div class="os-meta-item">📅 ${dataFmt}</div>
+          <div class="os-meta-item">📍 ${os.regiao}</div>
+          <div class="os-meta-item">📦 ~${prevItens.toLocaleString('pt-BR')} previstos</div>
+          <div class="os-meta-item">🛒 ${os.marketplace}</div>
+        </div>
+        <span class="os-badge ${os.status}">${enc?'Encerrada':'Em aberto'}</span>
+        ${isFreelancer?'<span class="os-badge freelancer">Freelancer</span>':''}
+        ${enc&&os.real?.bonus?'<span class="os-badge bonus">✓ Bônus</span>':''}
+        <span class="os-chevron" id="chev-${os.id}">▾</span>
+      </div>
+    </div>
+    <div class="os-detail" id="det-${os.id}">
+      <div class="os-detail-inner">
+        <div class="os-info-grid">
+          <div class="os-info-row"><span class="os-info-label">Endereço</span><span class="os-info-value">${os.endereco}</span></div>
+          <div class="os-info-row"><span class="os-info-label">Marketplace</span><span class="os-info-value">${os.marketplace}</span></div>
+          <div class="os-info-row"><span class="os-info-label">Data — início 08h00</span><span class="os-info-value">${dataFmt}</span></div>
+          <div class="os-info-row"><span class="os-info-label">SKUs previstos</span><span class="os-info-value">${os.previsto.skus} tipo${os.previsto.skus>1?'s':''}</span></div>
+        </div>
+        ${os.planilha?`<div class="sheets-badge" style="margin-top:14px">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Planilha: ${os.planilha.horaInicio}–${os.planilha.horaFim} · Pausa ${os.planilha.pausaMin}min · Transporte ${fmtR(os.planilha.transporte)} · Lanche ${fmtR(os.planilha.lanche)}${os.planilha.metaAplicavel?' · Meta aplicável':''}
+        </div>`:''}
+        <div style="margin-top:14px">
+          <div style="font-size:10px;font-weight:600;color:var(--mid);letter-spacing:.8px;text-transform:uppercase;margin-bottom:10px">Serviços previstos</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            ${os.previsto.et3>0?`<span style="background:var(--orange-pale);color:var(--orange);padding:5px 12px;border-radius:100px;font-size:12px;font-weight:500">Et. até 3kg: <strong>${os.previsto.et3.toLocaleString('pt-BR')}</strong></span>`:''}
+            ${os.previsto.et6>0?`<span style="background:var(--orange-pale);color:var(--orange);padding:5px 12px;border-radius:100px;font-size:12px;font-weight:500">Et. 3–6kg: <strong>${os.previsto.et6.toLocaleString('pt-BR')}</strong></span>`:''}
+            ${os.previsto.etP>0?`<span style="background:var(--orange-pale);color:var(--orange);padding:5px 12px;border-radius:100px;font-size:12px;font-weight:500">Et. +6kg: <strong>${os.previsto.etP.toLocaleString('pt-BR')}</strong></span>`:''}
+            ${os.previsto.k3>0?`<span style="background:var(--orange-pale);color:var(--orange);padding:5px 12px;border-radius:100px;font-size:12px;font-weight:500">Kits 3kg: <strong>${os.previsto.k3.toLocaleString('pt-BR')}</strong></span>`:''}
+            ${os.previsto.k6>0?`<span style="background:var(--orange-pale);color:var(--orange);padding:5px 12px;border-radius:100px;font-size:12px;font-weight:500">Kits 3–6kg: <strong>${os.previsto.k6.toLocaleString('pt-BR')}</strong></span>`:''}
+            ${os.previsto.pal>0?`<span style="background:var(--green-l);color:var(--green);padding:5px 12px;border-radius:100px;font-size:12px;font-weight:500">Stretch: <strong>${os.previsto.pal} pallet(s)</strong></span>`:''}
+          </div>
+        </div>
+        ${os.obs?`<div style="margin-top:12px;padding:12px 14px;background:var(--yellow-l);border-radius:10px;font-size:12px;color:#92400E;line-height:1.5">⚠️ <strong>Obs do seller:</strong> ${os.obs}</div>`:''}
+        ${enc ? renderEncerrada(os) : renderEncerrarForm(os)}
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderEncerrada(os){
+  const r=os.real, total=totalItens(r);
+  const mih=r.horas>0?Math.round(total/r.horas):0;
+  return `<div style="margin-top:18px;background:var(--green-l);border-radius:14px;padding:20px;border:1px solid rgba(26,122,74,.15)">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <span style="font-size:20px">✅</span>
+      <div><div style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:var(--green)">OS Encerrada</div><div style="font-size:11px;color:var(--green-m)">${r.horas}h trabalhadas · ${mih} itens/hora</div></div>
+      <button onclick="abrirRPS(osData.find(o=>o.id==='${os.id}'))" style="margin-left:auto;padding:7px 16px;background:var(--dark);color:white;border:none;border-radius:100px;font-size:11px;font-weight:600;cursor:pointer">🖨️ RPS</button>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+      ${r.et3>0?`<span style="background:white;padding:4px 12px;border-radius:100px;font-size:12px;border:1px solid rgba(26,122,74,.15)">Et. 3kg: <strong>${r.et3.toLocaleString('pt-BR')}</strong></span>`:''}
+      ${r.et6>0?`<span style="background:white;padding:4px 12px;border-radius:100px;font-size:12px;border:1px solid rgba(26,122,74,.15)">Et. 3–6kg: <strong>${r.et6.toLocaleString('pt-BR')}</strong></span>`:''}
+      ${r.etP>0?`<span style="background:white;padding:4px 12px;border-radius:100px;font-size:12px;border:1px solid rgba(26,122,74,.15)">Et. +6kg: <strong>${r.etP.toLocaleString('pt-BR')}</strong></span>`:''}
+      ${r.k3>0?`<span style="background:white;padding:4px 12px;border-radius:100px;font-size:12px;border:1px solid rgba(26,122,74,.15)">Kits 3kg: <strong>${r.k3.toLocaleString('pt-BR')}</strong></span>`:''}
+      ${r.k6>0?`<span style="background:white;padding:4px 12px;border-radius:100px;font-size:12px;border:1px solid rgba(26,122,74,.15)">Kits 3–6kg: <strong>${r.k6.toLocaleString('pt-BR')}</strong></span>`:''}
+      ${r.pal>0?`<span style="background:white;padding:4px 12px;border-radius:100px;font-size:12px;border:1px solid rgba(26,122,74,.15)">Stretch: <strong>${r.pal} pallet(s)</strong></span>`:''}
+      <span style="background:white;padding:4px 12px;border-radius:100px;font-size:12px;border:1px solid rgba(26,122,74,.15)">SKUs: <strong>${r.skus}</strong></span>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:13px;color:var(--green)">Total: <strong>${total.toLocaleString('pt-BR')} itens</strong></span>
+      ${os.tipo==='lider'?(r.bonus?`<span style="background:var(--orange-pale);color:var(--orange);padding:4px 12px;border-radius:100px;font-weight:600;font-size:12px">✓ Bônus R$${BONUS_POR_OS}</span>`:`<span style="background:var(--red-l);color:var(--red);padding:4px 12px;border-radius:100px;font-size:12px">Sem bônus</span>`):'<span style="background:#EDE9FE;color:#5B21B6;padding:4px 12px;border-radius:100px;font-size:12px">Participação freelancer</span>'}
+    </div>
+    ${r.obs?`<div style="margin-top:10px;font-size:12px;color:var(--mid);padding-top:10px;border-top:1px solid rgba(26,122,74,.1)">📝 ${r.obs}</div>`:''}
+  </div>`;
+}
+
+function renderEncerrarForm(os){
+  return `<div class="encerrar-form" id="form-${os.id}">
+    <div class="ef-title">Encerrar esta OS</div>
+    <div class="ef-sub">Registre o volume real executado. Os dados são enviados para a coordenação.</div>
+    <div class="ef-err" id="eferr-${os.id}"></div>
+    <div class="ef-sec">🏷️ Etiquetagem — volume real</div>
+    <div class="ef-grid">
+      <div class="ef-item"><label>Itens até 3kg</label><input type="number" class="ef-input" id="r_et3_${os.id}" placeholder="${os.previsto.et3||0}" min="0"/></div>
+      <div class="ef-item"><label>Itens 3–6kg</label><input type="number" class="ef-input" id="r_et6_${os.id}" placeholder="${os.previsto.et6||0}" min="0"/></div>
+      <div class="ef-item"><label>Acima de 6kg</label><input type="number" class="ef-input" id="r_etP_${os.id}" placeholder="${os.previsto.etP||0}" min="0"/></div>
+    </div>
+    <div class="ef-sec">🎁 Kits &amp; montagem — volume real</div>
+    <div class="ef-grid cols2">
+      <div class="ef-item"><label>Kits até 3kg</label><input type="number" class="ef-input" id="r_k3_${os.id}" placeholder="${os.previsto.k3||0}" min="0"/></div>
+      <div class="ef-item"><label>Kits 3–6kg</label><input type="number" class="ef-input" id="r_k6_${os.id}" placeholder="${os.previsto.k6||0}" min="0"/></div>
+    </div>
+    <div class="ef-sec">📦 Adicionais</div>
+    <div class="ef-grid cols2">
+      <div class="ef-item"><label>Pallets stretch</label><input type="number" class="ef-input" id="r_pal_${os.id}" placeholder="${os.previsto.pal||0}" min="0"/></div>
+      <div class="ef-item"><label>SKUs reais</label><input type="number" class="ef-input" id="r_skus_${os.id}" placeholder="${os.previsto.skus||0}" min="1"/></div>
+    </div>
+    <div class="ef-sec" style="color:var(--mid)">📝 Observações e intercorrências</div>
+    <textarea class="ef-input" id="r_obs_${os.id}" placeholder="Registre intercorrências, atrasos, problemas com o seller…"></textarea>
+    <div class="ef-sec">⏱️ Horas trabalhadas</div>
+    <div class="sheets-badge">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Backlog: virão da planilha de controle automaticamente
+    </div>
+    <div class="ef-grid cols2">
+      <div class="ef-item"><label>Horas trabalhadas</label><input type="number" class="ef-input" id="r_horas_${os.id}" placeholder="Ex: 6" min="0.5" max="16" step="0.5"/></div>
+      <div class="ef-item"><label>Nº agentes (incl. você)</label><input type="number" class="ef-input" id="r_agentes_${os.id}" placeholder="Ex: 3" min="1" max="12"/></div>
+    </div>
+    <div class="ef-sec" style="color:var(--dark)">🏆 Qualidade do serviço</div>
+    <div style="display:flex;gap:10px">
+      <div class="bonus-toggle" id="bt_sim_${os.id}" onclick="selectBonus('${os.id}',true)">
+        <div class="bonus-icon">✅</div>
+        <div class="bonus-text"><strong>Sem erros</strong><span>Concluído sem erros de etiquetagem e sem intercorrências</span></div>
+      </div>
+      <div class="bonus-toggle" id="bt_nao_${os.id}" onclick="selectBonus('${os.id}',false)">
+        <div class="bonus-icon">⚠️</div>
+        <div class="bonus-text"><strong>Houve erros ou problemas</strong><span>Registre no campo de observações</span></div>
+      </div>
+    </div>
+    <button class="btn-encerrar" onclick="solicitarEncerramento('${os.id}')">Encerrar OS →</button>
+  </div>`;
+}
+
+/* ═══ OS TOGGLE ═══ */
+function toggleOs(id){
+  const det=document.getElementById('det-'+id), chev=document.getElementById('chev-'+id);
+  const isOpen=det.classList.contains('open');
+  document.querySelectorAll('.os-detail').forEach(d=>d.classList.remove('open'));
+  document.querySelectorAll('.os-chevron').forEach(c=>c.classList.remove('open'));
+  if(!isOpen){ det.classList.add('open'); chev.classList.add('open'); }
+}
+
+/* ═══ BONUS SELECTION ═══ */
+function selectBonus(osId, val){
+  bonusSelections[osId]=val;
+  document.getElementById('bt_sim_'+osId).className='bonus-toggle'+(val?' selected':'');
+  document.getElementById('bt_nao_'+osId).className='bonus-toggle'+(!val?' selected-no':'');
+}
+
+/* ═══ ENCERRAR OS ═══ */
+function solicitarEncerramento(osId){
+  const os=osData.find(o=>o.id===osId);
+  const err=document.getElementById('eferr-'+osId);
+  const et3=parseInt(document.getElementById('r_et3_'+osId)?.value)||0;
+  const et6=parseInt(document.getElementById('r_et6_'+osId)?.value)||0;
+  const etP=parseInt(document.getElementById('r_etP_'+osId)?.value)||0;
+  const k3 =parseInt(document.getElementById('r_k3_'+osId)?.value)||0;
+  const k6 =parseInt(document.getElementById('r_k6_'+osId)?.value)||0;
+  const pal=parseInt(document.getElementById('r_pal_'+osId)?.value)||0;
+  const skus=parseInt(document.getElementById('r_skus_'+osId)?.value)||0;
+  const obs=document.getElementById('r_obs_'+osId)?.value||'';
+  const horas=parseFloat(document.getElementById('r_horas_'+osId)?.value)||0;
+  const agentes=parseInt(document.getElementById('r_agentes_'+osId)?.value)||0;
+  const mostrarErr=(msg)=>{ err.textContent=msg; err.classList.add('show'); setTimeout(()=>err.classList.remove('show'),4500); };
+
+  if(et3+et6+etP+k3+k6===0) return mostrarErr('Informe ao menos um volume de itens produzidos.');
+  if(!skus) return mostrarErr('Informe a quantidade real de SKUs.');
+  if(!horas) return mostrarErr('Informe as horas trabalhadas (necessário para o RPS).');
+  if(!agentes) return mostrarErr('Informe o número de agentes presentes.');
+  if(bonusSelections[osId]===undefined) return mostrarErr('Indique se o serviço foi concluído sem erros.');
+
+  const total=et3+et6+etP+k3+k6;
+  const bonus=bonusSelections[osId];
+  pendingConfirm={osId,real:{et3,et6,etP,k3,k6,pal,skus,obs,bonus,horas,agentes}};
+  document.getElementById('confirmIcon').textContent=bonus?'🏆':'✅';
+  document.getElementById('confirmTitle').textContent=`Encerrar ${os.num}?`;
+  document.getElementById('confirmDesc').textContent=`Volume real: ${total.toLocaleString('pt-BR')} itens em ${skus} SKU${skus>1?'s':''}. ${horas}h × ${agentes} agente${agentes>1?'s':''}. ${bonus?'Bônus de R$'+BONUS_POR_OS+' será registrado.':'Nenhum bônus nesta OS.'} Após encerrar, não é possível alterar.`;
+  document.getElementById('confirmOkBtn').onclick=confirmarEncerramento;
+  document.getElementById('confirmOverlay').classList.add('open');
+}
+function confirmarEncerramento(){
+  const os=osData.find(o=>o.id===pendingConfirm.osId);
+  os.status='encerrada';
+  os.real=pendingConfirm.real;
+  os.data=new Date().toISOString().split('T')[0];
+  const osSnap={...os};
+  pendingConfirm=null;
+  closeConfirm();
+  initApp();
+  showToast(osSnap.real.bonus?'🏆 OS encerrada com bônus! R$'+BONUS_POR_OS+' registrado.':'✅ OS encerrada com sucesso.', osSnap.real.bonus?'green':'');
+  setTimeout(()=>{ goPage('minhas-os'); abrirRPS(osSnap); },800);
+}
+function closeConfirm(){ document.getElementById('confirmOverlay').classList.remove('open'); pendingConfirm=null; }
+
+/* ═══ HISTÓRICO ═══ */
+function renderHistorico(){
+  const enc=osData.filter(o=>(o.lider===currentLider.id)&&o.status==='encerrada');
+  const c=document.getElementById('histBody');
+  if(!enc.length){ c.innerHTML=`<div class="empty"><div class="empty-icon">📂</div><div class="empty-title">Sem histórico ainda</div></div>`; return; }
+  c.innerHTML=enc.map(os=>{
+    const r=os.real, df=new Date(os.data+'T12:00:00').toLocaleDateString('pt-BR');
+    const ti=totalItens(r), mih=r.horas>0?Math.round(ti/r.horas):0;
+    const isF=os.tipo==='freelancer';
+    return `<div class="hist-row${isF?' freelancer-row':''}">
+      <span class="hist-os">${os.num}</span>
+      <span><div style="font-weight:500">${os.empresa}</div><div style="font-size:11px;color:var(--mid)">${os.cod}</div></span>
+      <span>${df}</span>
+      <span>${ti.toLocaleString('pt-BR')}</span>
+      <span>${r.horas}h</span>
+      <span>${mih}/h</span>
+      <span>${isF?'<span class="os-badge freelancer">Freelancer</span>':(r.bonus?'<span class="os-badge bonus">+R$'+BONUS_POR_OS+'</span>':'<span style="font-size:11px;color:var(--mid)">Líder s/ bônus</span>')}</span>
+    </div>`;
+  }).join('');
+}
+
+/* ═══ RANKING — itens por hora ═══ */
+function renderRanking(){
+  const c=document.getElementById('rankingList');
+  const enc=osData.filter(o=>o.lider===currentLider.id&&o.status==='encerrada'&&o.tipo==='lider');
+  const meItens=enc.reduce((s,o)=>s+totalItens(o.real||{}),0);
+  const meHoras=enc.reduce((s,o)=>s+(o.real?.horas||0),0);
+  const meMih=meHoras>0?Math.round(meItens/meHoras):0;
+
+  const eu={id:currentLider.id,nome:currentLider.nome,cor:currentLider.cor,mih:meMih,itens:meItens,horas:meHoras};
+  const outros=RANKING_DEMO
+    .filter(r=>r.id!==currentLider.id) // evita duplicata do líder logado
+    .map(r=>{const l=LIDERES.find(l=>l.id===r.id);return{...r,nome:l?l.nome:'Líder',cor:l?l.cor:'#888',mih:r.mediaItensHora};});
+  const todos=[eu,...outros].sort((a,b)=>b.mih-a.mih);
+  const maxMih=Math.max(...todos.map(t=>t.mih),1);
+  const medals=['🥇','🥈','🥉'];
+  const posClass=['gold','silver','bronze'];
+  c.innerHTML=todos.map((l,i)=>`
+    <div class="ranking-item${l.id===currentLider.id?' me':''}">
+      <div class="ranking-pos ${posClass[i]||''}">${medals[i]||i+1}</div>
+      <div class="ranking-avatar" style="background:${l.cor}">${initials(l.nome)}</div>
+      <div class="ranking-info">
+        <div class="ranking-name">${l.nome.split(' ')[0]+' '+l.nome.split(' ').pop()}${l.id===currentLider.id?' <span style="font-size:10px;color:var(--orange);font-weight:600">← você</span>':''}</div>
+        <div class="ranking-sub">${l.mih} itens/hora · ${(l.itens||l.totalItens||0).toLocaleString('pt-BR')} total</div>
+      </div>
+      <div class="ranking-bar-wrap">
+        <div class="ranking-bar"><div class="ranking-bar-fill" style="width:${Math.round(l.mih/maxMih*100)}%"></div></div>
+        <div class="ranking-num">${l.mih} <span style="font-size:11px;font-weight:400;color:var(--mid)">it/h</span></div>
+      </div>
+    </div>`).join('');
+}
+
+/* ═══ BÔNUS ═══ */
+function renderBonus(){
+  const now=new Date(), mes=now.toISOString().slice(0,7);
+  const encLider=osData.filter(o=>o.lider===currentLider.id&&o.status==='encerrada'&&o.tipo==='lider'&&o.data.startsWith(mes));
+  const comBonus=encLider.filter(o=>o.real?.bonus);
+  document.getElementById('bvTotal').textContent=encLider.length;
+  document.getElementById('bvBonus').textContent=comBonus.length;
+  document.getElementById('bvTotalR').textContent=fmtR(comBonus.length*BONUS_POR_OS);
+  const c=document.getElementById('bonusHistBody');
+  if(!encLider.length){ c.innerHTML=`<div class="empty"><div class="empty-icon">🏆</div><div class="empty-title">Nenhuma OS encerrada este mês como líder</div></div>`; return; }
+  c.innerHTML=encLider.map(os=>{
+    const r=os.real, ti=totalItens(r), mih=r.horas>0?Math.round(ti/r.horas):0, df=new Date(os.data+'T12:00:00').toLocaleDateString('pt-BR');
+    return `<div class="hist-row">
+      <span class="hist-os">${os.num}</span>
+      <span><div style="font-weight:500">${os.empresa}</div><div style="font-size:11px;color:var(--mid)">${os.cod}</div></span>
+      <span>${df}</span>
+      <span>${ti.toLocaleString('pt-BR')}</span>
+      <span>${r.horas}h</span>
+      <span>${mih}/h</span>
+      <span>${r.bonus?'<span class="os-badge bonus">+R$'+BONUS_POR_OS+'</span>':'<span style="font-size:11px;color:var(--mid)">Sem bônus</span>'}</span>
+    </div>`;
+  }).join('');
+}
+
+/* ═══ NF STORAGE ═══ */
+function nfKey(lid,mes){ return `pah_nf_${lid}_${mes}`; }
+function getNF(lid,mes){ try{ return JSON.parse(localStorage.getItem(nfKey(lid,mes)))||{status:'pendente',numero:'',enviada_em:'',confirmada_em:''}; }catch{ return {status:'pendente',numero:'',enviada_em:'',confirmada_em:''}; } }
+function saveNF(lid,mes,data){ localStorage.setItem(nfKey(lid,mes),JSON.stringify(data)); }
+
+/* ═══ FINANCEIRO ═══ */
+function renderFinanceiro(){
+  if(!currentLider)return;
+  const now=new Date(), mes=now.toISOString().slice(0,7);
+  const mesLabel=now.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+  // Todas as participações: líder e freelancer
+  const todasEnc=osData.filter(o=>o.lider===currentLider.id&&o.status==='encerrada'&&o.data.startsWith(mes));
+  const soLider=todasEnc.filter(o=>o.tipo==='lider');
+  const soFreel=todasEnc.filter(o=>o.tipo==='freelancer');
+
+  const totalBase=todasEnc.reduce((s,o)=>s+(o.real?.horas||0)*(o.real?.agentes||1)*HC_HORA,0);
+  const totalBonus=soLider.filter(o=>o.real?.bonus).length*BONUS_POR_OS;
+  const totalMes=totalBase+totalBonus;
+
+  document.getElementById('finResumo').innerHTML=`
+    <h3 style="font-size:16px;font-weight:700;margin-bottom:4px">Resumo financeiro — ${mesLabel.charAt(0).toUpperCase()+mesLabel.slice(1)}</h3>
+    <p style="font-size:12px;color:var(--mid);margin-bottom:6px;line-height:1.5">Valor total que você deve emitir na NF — inclui OSs como <strong>líder</strong> e como <strong>freelancer</strong>.</p>
+    <div class="sheets-badge">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Backlog: horas automáticas via planilha Google Sheets · filtro por nome completo do líder
+    </div>
+    <div class="bonus-grid">
+      <div class="bonus-item"><div class="bonus-item-val">${soLider.length}</div><div class="bonus-item-label">OSs como líder</div></div>
+      <div class="bonus-item"><div class="bonus-item-val" style="color:var(--navy)">${soFreel.length}</div><div class="bonus-item-label">OSs como freelancer</div></div>
+      <div class="bonus-item"><div class="bonus-item-val green">${fmtR(totalMes)}</div><div class="bonus-item-label">Total a emitir na NF</div></div>
+    </div>`;
+
+  // Status NF
+  const nfAtual=getNF(currentLider.id,mes);
+  document.getElementById('nfMesLabel').textContent=mesLabel.charAt(0).toUpperCase()+mesLabel.slice(1);
+  const cores={pendente:['var(--yellow-l)','#92400E','⏳ Pendente'],enviada:['#EFF6FF','#1E40AF','📤 Enviada'],confirmada:['var(--green-l)','var(--green)','✅ Confirmada']};
+  const [bg,cor,txt]=cores[nfAtual.status]||cores.pendente;
+  document.getElementById('nfStatusBadge').innerHTML=`<div style="background:${bg};color:${cor};padding:8px 18px;border-radius:100px;font-size:12px;font-weight:600">${txt}</div>`;
+
+  let actions='';
+  if(nfAtual.status==='pendente'){
+    actions=`<div style="background:var(--yellow-l);border-radius:12px;padding:18px;margin-bottom:14px">
+      <div style="font-size:13px;color:#92400E;line-height:1.6;margin-bottom:12px">⚠️ Emita a NF de MEI no valor de <strong>${fmtR(totalMes)}</strong> e envie para <strong>contato.prepathome@gmail.com</strong> com assunto: <em>NF ${mesLabel} — ${currentLider.nome}</em></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <div style="flex:1;min-width:200px"><label style="font-size:10px;color:var(--mid);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:5px">Número da NF</label><input type="text" id="nfNumero" class="ef-input" placeholder="Ex: 000123" style="background:white"/></div>
+        <button onclick="marcarNFEnviada('${mes}')" style="align-self:flex-end;padding:11px 22px;background:var(--navy);color:white;border:none;border-radius:100px;font-family:'Syne',sans-serif;font-weight:600;font-size:13px;cursor:pointer;white-space:nowrap">Marcar como enviada →</button>
+      </div>
+    </div>`;
+  } else if(nfAtual.status==='enviada'){
+    actions=`<div style="background:#EFF6FF;border-radius:12px;padding:18px;margin-bottom:14px;font-size:13px;color:#1E40AF;line-height:1.6">📤 NF nº <strong>${nfAtual.numero}</strong> enviada em <strong>${nfAtual.enviada_em}</strong>. Aguardando confirmação da coordenação.</div>`;
+    actions+=`<button onclick="confirmarNF('${mes}')" style="padding:9px 18px;background:var(--green);color:white;border:none;border-radius:100px;font-family:'Syne',sans-serif;font-weight:600;font-size:12px;cursor:pointer;opacity:.7">⚙️ [Admin] Confirmar recebimento da NF</button>`;
+  } else {
+    actions=`<div style="background:var(--green-l);border-radius:12px;padding:18px;margin-bottom:14px;font-size:13px;color:var(--green);line-height:1.6">✅ NF nº <strong>${nfAtual.numero}</strong> confirmada em <strong>${nfAtual.confirmada_em}</strong>. Pagamento processado.</div>`;
+  }
+  document.getElementById('nfActions').innerHTML=actions;
+
+  // Histórico NFs 6 meses
+  const statusCores=cores;
+  const rows=[];
+  for(let i=1;i<=6;i++){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    const k=d.toISOString().slice(0,7), lb=d.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+    const nf=getNF(currentLider.id,k);
+    const osM=osData.filter(o=>o.lider===currentLider.id&&o.status==='encerrada'&&o.data.startsWith(k));
+    const val=osM.reduce((s,o)=>s+calcValorOs(o),0);
+    const [b2,c2,t2]=statusCores[nf.status]||statusCores.pendente;
+    rows.push(`<div class="hist-row" style="grid-template-columns:1fr 60px 90px 120px 90px">
+      <span style="font-weight:500;text-transform:capitalize">${lb}</span>
+      <span>${osM.length} OS</span>
+      <span>${fmtR(val)}</span>
+      <span>${nf.numero?'NF '+nf.numero:'—'}</span>
+      <span><div style="background:${b2};color:${c2};padding:3px 10px;border-radius:100px;font-size:10px;font-weight:600;white-space:nowrap">${t2}</div></span>
+    </div>`);
+  }
+  document.getElementById('nfHistorico').innerHTML=`<div class="hist-table"><div class="hist-header" style="grid-template-columns:1fr 60px 90px 120px 90px"><span>Mês</span><span>OSs</span><span>Valor</span><span>Nº NF</span><span>Status</span></div>${rows.join('')}</div>`;
+
+  // Lista RPS
+  const rpsHtml=todasEnc.length===0
+    ?`<div class="empty"><div class="empty-icon">🧾</div><div class="empty-title">Nenhuma OS encerrada este mês</div></div>`
+    :todasEnc.map(os=>{
+        const df=new Date(os.data+'T12:00:00').toLocaleDateString('pt-BR'), val=calcValorOs(os);
+        return `<div style="background:white;border-radius:14px;border:1px solid var(--border);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:10px">
+          <div>
+            <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px">${os.num} ${os.tipo==='freelancer'?'<span class="os-badge freelancer">Freelancer</span>':''}</div>
+            <div style="font-size:12px;color:var(--mid);margin-top:2px">${os.empresa} · ${df} · ${os.real?.horas||0}h × ${os.real?.agentes||1} agente${(os.real?.agentes||1)>1?'s':''}${os.real?.bonus?' + bônus':''}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:18px;color:var(--green)">${fmtR(val)}</div>
+            <button onclick="abrirRPS(osData.find(o=>o.id==='${os.id}'))" style="padding:8px 16px;background:var(--dark);color:white;border:none;border-radius:100px;font-family:'Syne',sans-serif;font-weight:600;font-size:12px;cursor:pointer;white-space:nowrap">🖨️ Imprimir RPS</button>
+          </div>
+        </div>`;
+      }).join('');
+  document.getElementById('rpsLista').innerHTML=rpsHtml;
+}
+function marcarNFEnviada(mes){
+  const num=document.getElementById('nfNumero')?.value.trim();
+  if(!num){showToast('Informe o número da NF antes de marcar como enviada.','orange');return;}
+  const nf=getNF(currentLider.id,mes);
+  nf.status='enviada'; nf.numero=num; nf.enviada_em=new Date().toLocaleDateString('pt-BR');
+  saveNF(currentLider.id,mes,nf); renderFinanceiro();
+  showToast('📤 NF marcada como enviada. Aguarde confirmação da coordenação.','');
+}
+function confirmarNF(mes){
+  const nf=getNF(currentLider.id,mes);
+  nf.status='confirmada'; nf.confirmada_em=new Date().toLocaleDateString('pt-BR');
+  saveNF(currentLider.id,mes,nf); renderFinanceiro();
+  showToast('✅ NF confirmada e registrada!','green');
+}
+
+/* ═══ RPS ═══ */
+function abrirRPS(os){
+  if(!os?.real)return;
+  const df=new Date(os.data+'T12:00:00').toLocaleDateString('pt-BR');
+  const ti=totalItens(os.real), mih=os.real.horas>0?Math.round(ti/os.real.horas):0;
+  const base=(os.real.horas||0)*(os.real.agentes||1)*HC_HORA;
+  const bon=(os.tipo==='lider'&&os.real.bonus)?BONUS_POR_OS:0;
+  const total=base+bon;
+  document.getElementById('rpsContent').innerHTML=`
+    <div id="rpsImpressao" style="font-family:Georgia,serif;color:#1a1a1a">
+      <div style="text-align:center;margin-bottom:22px;padding-bottom:16px;border-bottom:2px solid #1a1a1a">
+        <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:18px;letter-spacing:-.5px">PREP AT HOME by Tha Enviado</div>
+        <div style="font-size:11px;color:#555;margin-top:4px;letter-spacing:1px;text-transform:uppercase">Recibo de Prestação de Serviço — RPS</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px">
+        <div><div style="font-size:10px;color:#777;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">OS Multifoco</div><div style="font-weight:700;font-size:14px">${os.num}</div></div>
+        <div><div style="font-size:10px;color:#777;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">Data do serviço</div><div style="font-weight:700;font-size:14px">${df}</div></div>
+        <div><div style="font-size:10px;color:#777;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">Prestador</div><div style="font-weight:700;font-size:14px">${currentLider.nome}</div><div style="font-size:11px;color:#777">Função: ${os.tipo==='lider'?'Líder Técnico':'Freelancer de Preparação'}</div></div>
+        <div><div style="font-size:10px;color:#777;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">Contratante</div><div style="font-weight:700;font-size:14px">Prep at Home (Tha Enviado)</div></div>
+        <div><div style="font-size:10px;color:#777;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">Local</div><div style="font-size:13px">${os.endereco}</div></div>
+        <div><div style="font-size:10px;color:#777;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">Seller / Marketplace</div><div style="font-size:13px">${os.cod} — ${os.empresa}<br>${os.marketplace}</div></div>
+      </div>
+      <div style="background:#f7f5f2;border-radius:10px;padding:14px;margin-bottom:18px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;color:#555">Serviço executado</div>
+        <div style="font-size:13px;color:#333;line-height:1.7">${ti.toLocaleString('pt-BR')} itens preparados — ${os.real.skus} tipo${os.real.skus>1?'s':''} de produto — ${mih} itens/hora</div>
+      </div>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:18px;font-size:13px">
+        <tr style="background:#1a1a1a;color:white"><th style="padding:10px 14px;text-align:left">Descrição</th><th style="padding:10px 14px;text-align:right">Valor</th></tr>
+        <tr style="border-bottom:1px solid #eee"><td style="padding:10px 14px">${os.real.horas}h × ${os.real.agentes} agente${os.real.agentes>1?'s':''} × R$${HC_HORA}/hora</td><td style="padding:10px 14px;text-align:right;font-weight:600">${fmtR(base)}</td></tr>
+        ${bon>0?`<tr style="border-bottom:1px solid #eee"><td style="padding:10px 14px">Bônus — OS concluída sem erros</td><td style="padding:10px 14px;text-align:right;font-weight:600">${fmtR(bon)}</td></tr>`:''}
+        <tr style="background:#f7f5f2;font-weight:700"><td style="padding:12px 14px">TOTAL A RECEBER</td><td style="padding:12px 14px;text-align:right;font-size:17px;color:#1A7A4A">${fmtR(total)}</td></tr>
+      </table>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:32px;padding-top:18px;border-top:1px solid #ddd;font-size:12px;text-align:center;color:#777">
+        <div><div style="border-top:1px solid #999;padding-top:8px;margin-top:28px">${currentLider.nome}<br>${os.tipo==='lider'?'Líder Técnico':'Freelancer de Preparação'}</div></div>
+        <div><div style="border-top:1px solid #999;padding-top:8px;margin-top:28px">Prep at Home by Tha Enviado<br>Contratante</div></div>
+      </div>
+      <div style="margin-top:18px;font-size:10px;color:#aaa;text-align:center">Gerado em ${new Date().toLocaleString('pt-BR')} · ⚠️ Backlog: assinatura eletrônica com validade jurídica</div>
+    </div>`;
+  document.getElementById('rpsOverlay').classList.add('open');
+}
+function fecharRPS(){ document.getElementById('rpsOverlay').classList.remove('open'); }
+function imprimirRPS(){
+  const html=document.getElementById('rpsImpressao').innerHTML;
+  const w=window.open('','_blank','width=700,height=900');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>RPS — Prep at Home</title><link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&display=swap" rel="stylesheet"/><style>body{font-family:Georgia,serif;padding:48px;color:#1a1a1a;max-width:680px;margin:0 auto}@media print{body{padding:24px}}</style></head><body>${html}<script>window.onload=()=>window.print()<\/script></body></html>`);
+  w.document.close();
+}
+
+/* ════════════════════════════════════════════════════
+   🔗  CONFIGURAÇÃO DE INTEGRAÇÕES — edite aqui
+
+   MULTIFOCO:
+   Token já configurado (MF_TOKEN acima).
+   A data de corte garante que só OSs de 01/04/2026
+   em diante aparecem no painel.
+
+   GOOGLE SHEETS (planilha privada):
+   Siga os passos abaixo para gerar a URL do Apps Script:
+   1. Abra a planilha → Extensões → Apps Script
+   2. Cole o script em APPS_SCRIPT_CODE (abaixo) e salve
+   3. Clique em "Implantar" → "Novo implantação"
+   4. Tipo: App da Web | Executar como: Você | Acesso: Qualquer pessoa
+   5. Cole a URL gerada em APPS_SCRIPT_URL abaixo
+════════════════════════════════════════════════════ */
+const DATA_CORTE    = '2026-04-01'; // só OSs a partir desta data
+const MF_TOKEN      = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL3JvYm90Lm11bHRpZm9jby5hcHAiLCJpYXQiOjE3NzY3MTQzNzAsIm5iZiI6MTc3NjcxNDM3MCwianRpIjoiOWhQY2tyTHh6bGZqVmM3ciIsInN1YiI6IjE2MTkzIn0.hhapUHZYFqLfKyDomMSazYiOycTQgB3B-Py_MrWsMSE';
+const MF_BASE       = 'https://api.multifoco.app';
+const MF_TECNICO    = 2;
+
+// Cole aqui a URL do seu Google Apps Script após implantação:
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbycTfo23cAe7SjIJVmiQ8sbf0fq8LwuQXiEyRqHDc8ZNTM7ZOOY2nGrzIr2ael7j4c3/exec';
+// Enquanto vazio, o painel usa os dados da planilha em modo demo
+
+/* ════════════════════════════════════════════════════
+   📋  SCRIPT PARA COLAR NO GOOGLE APPS SCRIPT
+   (salve como APPS_SCRIPT_CODE para referência)
+
+   function doGet(e) {
+     const ss = SpreadsheetApp.openById('SEU_ID_DA_PLANILHA');
+     const aba = ss.getSheetByName('Ptgos');
+     const dados = aba.getDataRange().getValues();
+     const cabecalho = dados[0];
+     const linhas = dados.slice(1).map(row => {
+       const obj = {};
+       cabecalho.forEach((col, i) => obj[col] = row[i]);
+       return obj;
+     }).filter(row => row['Data'] && row['Lider']);
+     return ContentService
+       .createTextOutput(JSON.stringify(linhas))
+       .setMimeType(ContentService.MimeType.JSON);
+   }
+════════════════════════════════════════════════════ */
+
+/* ═══ ESTADO DOS DADOS ═══ */
+let debugData = { calendar:null, serviceOrders:null, sheets:null };
+let modoAoVivo = false;
+
+/* ═══ LOADING STEPS ═══ */
+function setLoadStep(i, status){ // status: 'active' | 'done' | 'error'
+  const el=document.getElementById('lstep'+i);
+  if(!el)return;
+  el.classList.remove('active','done');
+  if(status==='active'){ el.classList.add('active'); el.querySelector('.load-step-icon').textContent='⏳'; }
+  if(status==='done'){   el.classList.add('done');   el.querySelector('.load-step-icon').textContent='✅'; }
+  if(status==='error'){  el.classList.add('done');   el.querySelector('.load-step-icon').textContent='⚠️'; }
+}
+function setBadge(tipo, txt){
+  const b=document.getElementById('sourceBadge');
+  const t=document.getElementById('sourceTxt');
+  b.className='source-badge '+tipo+(tipo!=='loading'?' ':'');
+  if(tipo!=='loading') b.querySelector('.source-dot').classList.remove('pulse');
+  else b.querySelector('.source-dot').classList.add('pulse');
+  t.textContent=txt;
+}
+
+/* ═══ BUSCAR DADOS MULTIFOCO ═══ */
+async function buscarMultifoco(endpoint){
+  const url=MF_BASE+endpoint;
+  const res=await fetch(url,{
+    headers:{'Authorization':'Bearer '+MF_TOKEN,'Content-Type':'application/json','Accept':'application/json'}
+  });
+  if(!res.ok) throw new Error('HTTP '+res.status);
+  return await res.json();
+}
+
+/* ═══ MAPEAR OS DO MULTIFOCO PARA O FORMATO DO PAINEL ═══ */
+function mapearOsMultifoco(items, liderId){
+  if(!Array.isArray(items)) return [];
+  return items
+    .filter(item=>{
+      // Só a partir da data de corte
+      const dataItem = item.schedulingStart||item.date||item.created_at||'';
+      return dataItem >= DATA_CORTE;
+    })
+    .map(item=>{
+      const nomeCliente = item.client?.name || item.clientName || '—';
+      const numero = item.serviceOrderNumber || item.serviceOrder?.number || item.id || '—';
+      const data = (item.schedulingStart||item.date||'').slice(0,10);
+      const tecId = item.technician?.id || item.technicianId;
+      const liderDono = LIDERES.find(l=>{
+        if(tecId===MF_TECNICO) return true; // OS do robô → atribuída ao líder logado
+        return l.mfId===tecId;
+      });
+      return {
+        id: 'mf_'+numero,
+        num: 'OS #'+numero,
+        lider: liderDono?.id || liderId,
+        tipo: 'lider',
+        empresa: nomeCliente,
+        cod: item.client?.code || item.externalReference || '—',
+        marketplace: item.description?.match(/amazon|mercado|shopee/i)?.[0] || 'Amazon FBA',
+        data, regiao: '—',
+        endereco: item.address || item.client?.address || '—',
+        previsto:{ et3:0,et6:0,etP:0,k3:0,k6:0,pal:0,skus:0 },
+        status: item.status==='closed'||item.status==='finished' ? 'encerrada' : 'aberta',
+        obs: item.defect||item.observation||'',
+        _raw: item
+      };
+    });
+}
+
+/* ═══ MAPEAR PLANILHA PARA DADOS DE HORAS ═══ */
+function mapearPlanilha(linhas, nomeCompleto){
+  // Filtra pelo nome do líder (coluna Lider ou Nome do Freelancer)
+  const primeiro = nomeCompleto.split(' ')[0].toUpperCase();
+  return linhas.filter(row=>{
+    const lider = (row['Lider']||'').toUpperCase();
+    const freela= (row['Nome e SOBRENOME do Freelancer']||'').toUpperCase();
+    return lider.includes(primeiro)||freela.includes(primeiro);
+  }).filter(row=>{
+    const data = row['Data'];
+    if(!data) return false;
+    const d = data instanceof Date ? data.toISOString().slice(0,10)
+      : String(data).includes('/')
+        ? data.split('/').reverse().join('-').slice(0,10)
+        : String(data).slice(0,10);
+    return d >= DATA_CORTE;
+  }).map(row=>{
+    const data = row['Data'];
+    const d = data instanceof Date ? data.toISOString().slice(0,10)
+      : String(data).includes('/')
+        ? data.split('/').reverse().join('-').slice(0,10)
+        : String(data).slice(0,10);
+    return {
+      osNum: String(row['OS']||''),
+      nome: row['Nome e SOBRENOME do Freelancer']||row['Lider']||'',
+      data: d,
+      horaInicio: row['Hora Inicio']||'',
+      horaFim: row['Hora Fim']||'',
+      pausa: parseFloat(row['Pausa'])||30,
+      transporte: parseFloat(row['TRANS PORTE'])||0,
+      lanche: parseFloat(row['LANCHE'])||0,
+      meta: row['META']||'',
+      qtdHoras: parseFloat(row['Qtd Horas'])||0,
+      totalPagar: parseFloat(row['Total a pagar'])||0,
+      pix: row['PIX']||'',
+      status: row['Status']||'',
+      pago: row['PAGO']||''
+    };
+  });
+}
+
+/* ═══ CARREGAMENTO PRINCIPAL ═══ */
+async function carregarDadosReais(){
+  document.getElementById('loadOverlay').classList.remove('hidden');
+  setBadge('loading','Carregando…');
+
+  // ── STEP 0: Multifoco (tenta mas não bloqueia) ──
+  setLoadStep(0,'active');
+  try{
+    const [resCalendar, resOS] = await Promise.allSettled([
+      buscarMultifoco('/v1/calendar'),
+      buscarMultifoco('/v1/service-orders')
+    ]);
+    debugData.calendar      = resCalendar.status==='fulfilled' ? resCalendar.value : {erro: resCalendar.reason?.message};
+    debugData.serviceOrders = resOS.status==='fulfilled'       ? resOS.value       : {erro: resOS.reason?.message};
+    setLoadStep(0, resCalendar.status==='fulfilled'||resOS.status==='fulfilled' ? 'done' : 'error');
+  } catch(e){
+    debugData.calendar={erro:'CORS: '+e.message};
+    debugData.serviceOrders={erro:'CORS: '+e.message};
+    setLoadStep(0,'error');
+  }
+
+  // ── STEP 1: Google Sheets — FONTE PRIMÁRIA ──
+  setLoadStep(1,'active');
+  let planilhaLinhas = [];
+  if(APPS_SCRIPT_URL){
+    try{
+      const res  = await fetch(APPS_SCRIPT_URL);
+      const json = await res.json();
+      debugData.sheets = json;
+      // Apps Script retorna { pagamentos, lancamentos, cabecalho }
+      // OU array direto (versão anterior)
+      planilhaLinhas = Array.isArray(json)
+        ? json
+        : (json.pagamentos || []);
+      setLoadStep(1, planilhaLinhas.length ? 'done' : 'error');
+    } catch(e){
+      debugData.sheets={erro:'Apps Script: '+e.message};
+      setLoadStep(1,'error');
+    }
+  } else {
+    debugData.sheets={info:'APPS_SCRIPT_URL não configurada'};
+    setLoadStep(1,'error');
+  }
+
+  // ── STEP 2: Construir OSs a partir da planilha ──
+  setLoadStep(2,'active');
+  const osDeSheets = construirOsDeSheets(planilhaLinhas);
+
+  if(osDeSheets.length){
+    // Usa dados reais: OS encerradas da planilha + OS abertas do Multifoco (se existirem)
+    const osAbertasMF = (() => {
+      try{
+        const items = debugData.calendar?.items || debugData.calendar?.data || [];
+        if(!Array.isArray(items)||!items.length) return [];
+        return mapearOsMultifoco(items, currentLider.id).filter(o=>o.status==='aberta');
+      } catch(e){ return []; }
+    })();
+    osData = [...osAbertasMF, ...osDeSheets];
+    modoAoVivo = true;
+    setBadge('live','🟢 Ao vivo — Planilha');
+    setLoadStep(2,'done');
+  } else {
+    // Sem dados reais → mantém demo
+    modoAoVivo = false;
+    setBadge('demo','⚠️ Modo demo — clique para ver');
+    setLoadStep(2,'error');
+  }
+
+  setTimeout(()=>{
+    document.getElementById('loadOverlay').classList.add('hidden');
+    initApp();
+    if(!modoAoVivo){
+      showToast('⚠️ Planilha não retornou dados. Verifique o Apps Script e clique no badge.','orange');
+    } else {
+      showToast('✅ '+osDeSheets.length+' OS(s) carregada(s) da planilha.','green');
+    }
+  }, 600);
+}
+
+/* ═══ CONSTRUIR OS A PARTIR DA PLANILHA (fonte primária) ═══ */
+function construirOsDeSheets(linhas){
+  if(!linhas||!linhas.length) return [];
+  const primeiroNome = currentLider.nome.split(' ')[0].toUpperCase();
+  // Normaliza data dd/MM/yyyy → yyyy-MM-dd
+  function normData(v){
+    if(!v) return '';
+    const s = String(v).trim();
+    if(s.includes('/')) return s.split('/').reverse().join('-').slice(0,10);
+    return s.slice(0,10);
+  }
+  // Agrupa linhas por número de OS
+  const grupos = {};
+  linhas.forEach(row=>{
+    const osNum = String(row['OS']||'').trim();
+    if(!osNum) return;
+    const data = normData(row['Data']);
+    if(data < DATA_CORTE) return; // só OSs a partir de 01/04/2026
+    if(!grupos[osNum]) grupos[osNum]={rows:[], lider:'', cliente:''};
+    grupos[osNum].rows.push(row);
+    if((row['Lider']||'').toUpperCase().includes(primeiroNome)) grupos[osNum].lider = row['Lider']||'';
+    if(!grupos[osNum].cliente) grupos[osNum].cliente = row['Cliente']||'—';
+  });
+
+  const resultado = [];
+  Object.entries(grupos).forEach(([osNum, g])=>{
+    // Verifica se o líder atual participou desta OS (como líder OU freelancer)
+    const euFuiLider      = g.lider.toUpperCase().includes(primeiroNome);
+    const minhaLinhaFreel = g.rows.find(r=>(r['Nome e SOBRENOME do Freelancer']||'').toUpperCase().includes(primeiroNome));
+    if(!euFuiLider && !minhaLinhaFreel) return;
+
+    const tipo   = euFuiLider ? 'lider' : 'freelancer';
+    const minhaLinha = euFuiLider
+      ? g.rows.find(r=>(r['Lider']||'').toUpperCase().includes(primeiroNome))
+      : minhaLinhaFreel;
+    if(!minhaLinha) return;
+
+    const data    = normData(minhaLinha['Data']);
+    const horas   = parseFloat(minhaLinha['Qtd Horas'])||0;
+    const agentes = g.rows.length;
+    const bonus   = tipo==='lider' && String(minhaLinha['META']||'').trim()!=='' && String(minhaLinha['META']||'').trim()!=='-';
+
+    resultado.push({
+      id:          'sh_'+osNum,
+      num:         'OS #'+osNum,
+      lider:       currentLider.id,
+      tipo,
+      empresa:     g.cliente,
+      cod:         '—',
+      marketplace: 'Amazon FBA',
+      data,
+      regiao:      '—',
+      endereco:    '—',
+      previsto:    { et3:0, et6:0, etP:0, k3:0, k6:0, pal:0, skus:0 },
+      status:      'encerrada',
+      obs:         '',
+      real:{
+        et3:0, et6:0, etP:0, k3:0, k6:0, pal:0,
+        skus:  0,
+        horas,
+        agentes,
+        obs:   '',
+        bonus
+      },
+      planilha:{
+        horaInicio:   minhaLinha['Hora Inicio']||'',
+        horaFim:      minhaLinha['Hora Fim']||'',
+        pausaMin:     parseFloat(minhaLinha['Pausa'])||30,
+        transporte:   parseFloat(minhaLinha['TRANS PORTE'])||0,
+        lanche:       parseFloat(minhaLinha['LANCHE'])||0,
+        metaAplicavel:bonus,
+        totalPagar:   parseFloat(minhaLinha['Total a pagar'])||0,
+        pago:         minhaLinha['PAGO']||'',
+        status:       minhaLinha['Status']||''
+      }
+    });
+  });
+
+  return resultado.sort((a,b)=>b.data.localeCompare(a.data));
+}
+
+/* ═══ DEBUG MODAL ═══ */
+let debugTabAtual = 0;
+function abrirDebug(){ document.getElementById('debugOverlay').classList.add('open'); renderDebugTab(debugTabAtual); }
+function fecharDebug(){ document.getElementById('debugOverlay').classList.remove('open'); }
+function debugTab(i){
+  document.querySelectorAll('.debug-tab').forEach((t,idx)=>t.classList.toggle('active',idx===i));
+  debugTabAtual=i; renderDebugTab(i);
+}
+function renderDebugTab(i){
+  const c=document.getElementById('debugContent');
+  const sources=['calendar','serviceOrders','sheets'];
+  const labels=['Multifoco — GET /v1/calendar','Multifoco — GET /v1/service-orders','Google Sheets — Apps Script'];
+  const d=debugData[sources[i]];
+  if(!d){ c.innerHTML=`<div class="debug-status warn">⏳ Ainda não carregado</div>`; return; }
+  const temErro='erro' in d||'error' in d;
+  const temInfo='info' in d;
+  c.innerHTML=`
+    <div class="debug-status ${temErro?'err':temInfo?'warn':'ok'}">
+      ${temErro?'❌ Erro':'temInfo'?'ℹ️ Info':'✅ Retornou dados'}
+      <span style="opacity:.5;margin-left:6px">${labels[i]}</span>
+    </div>
+    ${!temErro&&!temInfo?`<div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:10px">
+      ${Array.isArray(d)||(d.items&&Array.isArray(d.items))?'Total de items: '+(Array.isArray(d)?(d.length):(d.items?.length||0)):'Objeto retornado'}
+    </div>`:''}
+    <pre class="debug-pre">${JSON.stringify(d,null,2)}</pre>`;
+}
+function showToast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast '+(type||'');
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),4000);
+}
+</script>
+</body>
+</html>
