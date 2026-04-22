@@ -1104,7 +1104,7 @@ function renderEncerrada(os){
   return `<div style="margin-top:18px;background:var(--green-l);border-radius:14px;padding:20px;border:1px solid rgba(26,122,74,.15)">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
       <span style="font-size:20px">✅</span>
-      <div><div style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:var(--green)">OS Encerrada</div><div style="font-size:11px;color:var(--green-m)">${r.horas}h trabalhadas · ${mih} itens/hora</div></div>
+      <div><div style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:var(--green)">OS Encerrada</div><div style="font-size:11px;color:var(--green-m)">${fmtHoras(r.horas)} trabalhadas · ${mih} itens/hora</div></div>
       <button onclick="abrirRPS(osData.find(o=>o.id==='${os.id}'))" style="margin-left:auto;padding:7px 16px;background:var(--dark);color:white;border:none;border-radius:100px;font-size:11px;font-weight:600;cursor:pointer">🖨️ RPS</button>
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">
@@ -1246,7 +1246,7 @@ function renderHistorico(){
       <span><div style="font-weight:500">${os.empresa}</div><div style="font-size:11px;color:var(--mid)">${os.cod}</div></span>
       <span>${df}</span>
       <span>${ti.toLocaleString('pt-BR')}</span>
-      <span>${r.horas}h</span>
+      <span>${fmtHoras(r.horas)}</span>
       <span>${mih}/h</span>
       <span>${isF?'<span class="os-badge freelancer">Freelancer</span>':(r.bonus?'<span class="os-badge bonus">+R$'+BONUS_POR_OS+'</span>':'<span style="font-size:11px;color:var(--mid)">Líder s/ bônus</span>')}</span>
     </div>`;
@@ -1301,7 +1301,7 @@ function renderBonus(){
       <span><div style="font-weight:500">${os.empresa}</div><div style="font-size:11px;color:var(--mid)">${os.cod}</div></span>
       <span>${df}</span>
       <span>${ti.toLocaleString('pt-BR')}</span>
-      <span>${r.horas}h</span>
+      <span>${fmtHoras(r.horas)}</span>
       <span>${mih}/h</span>
       <span>${r.bonus?'<span class="os-badge bonus">+R$'+BONUS_POR_OS+'</span>':'<span style="font-size:11px;color:var(--mid)">Sem bônus</span>'}</span>
     </div>`;
@@ -1542,11 +1542,15 @@ async function buscarMultifoco(endpoint){
 }
 
 async function buscarCalendarioMF(){
-  // /v1/calendar exige start e end obrigatórios
   const hoje = new Date();
   const fim = hoje.toISOString().slice(0,10);
-  const inicio = DATA_CORTE; // 2026-04-01
+  const inicio = DATA_CORTE;
   return await buscarMultifoco(`/v1/calendar?start=${inicio}&end=${fim}&technician[]=${MF_TECNICO}`);
+}
+
+function fmtHoras(h){
+  const v = Math.round(parseFloat(h||0)*10)/10;
+  return v % 1 === 0 ? v+'h' : v.toFixed(1)+'h';
 }
 
 /* ═══ MAPEAR OS DO MULTIFOCO PARA O FORMATO DO PAINEL ═══ */
@@ -1636,7 +1640,7 @@ async function carregarDadosReais(){
   try{
     const [resCalendar, resOS] = await Promise.allSettled([
       buscarCalendarioMF(),
-      buscarMultifoco('/v1/service-orders')
+      buscarMultifoco('/v1/serviceOrders')
     ]);
     debugData.calendar      = resCalendar.status==='fulfilled' ? resCalendar.value : {erro: resCalendar.reason?.message};
     debugData.serviceOrders = resOS.status==='fulfilled'       ? resOS.value       : {erro: resOS.reason?.message};
@@ -1731,24 +1735,26 @@ function construirOsDeSheets(linhas){
     return s.slice(0,10);
   }
 
-  // Agrupa linhas por número de OS — filtra apenas a partir de DATA_CORTE
+  // Agrupa linhas por OS+Data — mesmo OS em dias diferentes = entradas separadas
   const grupos = {};
   linhas.forEach(row=>{
     const osNum = String(row[colOS]||'').trim();
     if(!osNum||osNum==='0') return;
     const data = normData(row[colData]);
     if(!data) return;
-    if(data < DATA_CORTE) return; // ← só a partir de 01/04/2026
-    if(!grupos[osNum]) grupos[osNum]={rows:[], lider:'', cliente:'', data};
-    grupos[osNum].rows.push(row);
+    if(data < DATA_CORTE) return; // só a partir de 01/04/2026
+    // Chave = OS + Data para separar dias diferentes do mesmo OS
+    const chave = `${osNum}_${data}`;
+    if(!grupos[chave]) grupos[chave]={osNum, rows:[], lider:'', cliente:'', data};
+    grupos[chave].rows.push(row);
     const nomeLider = String(row[colLider]||'').toUpperCase().trim();
-    if(nomeLider.includes(primeiroNome)) grupos[osNum].lider = row[colLider]||'';
-    if(!grupos[osNum].cliente) grupos[osNum].cliente = String(row[colCliente]||'—');
-    if(!grupos[osNum].data) grupos[osNum].data = data;
+    if(nomeLider.includes(primeiroNome)) grupos[chave].lider = row[colLider]||'';
+    if(!grupos[chave].cliente) grupos[chave].cliente = String(row[colCliente]||'—');
   });
 
   const resultado = [];
-  Object.entries(grupos).forEach(([osNum, g])=>{
+  Object.entries(grupos).forEach(([chave, g])=>{
+    const osNum = g.osNum;
     const euFuiLider = g.lider.toUpperCase().includes(primeiroNome);
     const minhaLinhaFreel = g.rows.find(r=>
       String(r[colFreel]||'').toUpperCase().includes(primeiroNome)
@@ -1761,19 +1767,20 @@ function construirOsDeSheets(linhas){
       : minhaLinhaFreel;
     if(!minhaLinha) return;
 
-    const data   = g.data || normData(minhaLinha[colData]);
+    const data   = g.data;
     const horas  = parseFloat(minhaLinha[colHoras])||0;
     const agentes= g.rows.length;
     const meta   = String(minhaLinha['META']||'').trim();
-    const bonus  = tipo==='lider' && meta!=='' && meta!=='0' && meta!=='-';
+    // META preenchida por dia — bônus se META > 0 e não for traço
+    const bonus  = tipo==='lider' && meta!=='' && meta!=='0' && meta!=='-' && !isNaN(parseFloat(meta));
 
     resultado.push({
-      id:       'sh_'+osNum,
+      id:       'sh_'+chave,  // inclui data para evitar colisão
       num:      'OS #'+osNum,
       lider:    currentLider.id,
       tipo,
       empresa:  g.cliente,
-      cod:      '—',
+      cod:      String(g.cliente).replace(/[^0-9]/g,'').slice(0,6)||'—',
       marketplace: 'Amazon FBA',
       data,
       regiao:   '—',
