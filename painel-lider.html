@@ -856,13 +856,14 @@ function fmtR(v){ return 'R$\u202f'+v.toLocaleString('pt-BR',{minimumFractionDig
 function totalItens(r){ return (r.et3||0)+(r.et6||0)+(r.etP||0)+(r.k3||0)+(r.k6||0); }
 function calcValorOs(os){
   if(!os.real) return 0;
+  // SEMPRE usa coluna O como fonte — mesmo quando é 0 (não preenchido ainda)
+  // Fallback só para OSs que não têm dados da planilha (ex: OSs abertas do Multifoco)
+  if(os.planilha) return os.planilha.totalPagar || 0;
+  // Fallback para OSs sem planilha (abertas)
   const p = os.planilha||{};
-  // Usa o valor real da planilha (coluna O = Total a pagar) se preenchido
-  if(p.totalPagar && p.totalPagar > 0) return p.totalPagar;
-  // Fallback: reconstrói pela fórmula =(Horas×R$10) + Transporte + Lanche + Meta
-  const base   = (os.real.horas||0) * HC_HORA;
+  const base = (os.real.horas||0) * HC_HORA;
   const extras = (p.transporte||0) + (p.lanche||0) + (p.metaVal||0);
-  const bonus  = (os.tipo==='lider' && os.real.bonus) ? BONUS_POR_OS : 0;
+  const bonus = (os.tipo==='lider' && os.real.bonus) ? BONUS_POR_OS : 0;
   return base + extras + bonus;
 }
 function mediaItensHora(osList){
@@ -1249,12 +1250,14 @@ function renderHistorico(){
     const r=os.real, p=os.planilha||{}, df=new Date(os.data+'T12:00:00').toLocaleDateString('pt-BR');
     const ti=os.mfItens||totalItens(r), agts=(r.agentes||1), mih=(r.horas>0&&ti>0&&agts>0)?Math.round(ti/agts/r.horas):0;
     const isF=os.tipo==='freelancer';
-    const val = calcValorOs(os); // sempre usa totalPagar (col O) como base
-    const metaReal = p.metaVal !== undefined ? p.metaVal : (p.metaAplicavel ? BONUS_POR_OS : 0);
+    const val = calcValorOs(os); // sempre coluna O
+    const metaReal = p.metaVal !== undefined ? p.metaVal : 0;
     const valFormula = Math.round(((r.horas||0)*HC_HORA + (p.transporte||0) + (p.lanche||0) + metaReal) * 100) / 100;
-    // ⚠️ só aparece quando coluna O existe E diverge da fórmula > R$0.10
-    const divergencia = (p.totalPagar||0) > 0 && Math.abs((p.totalPagar||0) - valFormula) > 0.10;
-    const tooltipMsg = `⚠️ Col.O: ${fmtR(p.totalPagar)} | Fórmula (H×10+K+L+M): ${fmtR(valFormula)} | Dif: ${fmtR(Math.abs((p.totalPagar||0)-valFormula))}`;
+    // ⚠️ sempre que coluna O difere da fórmula em mais de R$0.10 (inclusive quando O=0)
+    const divergencia = Math.abs((p.totalPagar||0) - valFormula) > 0.10;
+    const tooltipMsg = p.totalPagar===0
+      ? `⚠️ Coluna O = R$0 — pagamento não preenchido. Fórmula esperaria ${fmtR(valFormula)}.`
+      : `⚠️ Col.O: ${fmtR(p.totalPagar)} | Fórmula (H×10+K+L+M): ${fmtR(valFormula)} | Dif: ${fmtR(Math.abs((p.totalPagar||0)-valFormula))}`;
     const valorBadge = divergencia
       ? `<span title="${tooltipMsg}" style="color:var(--red);font-weight:600;cursor:help">${fmtR(val)} ⚠️</span>`
       : `<span style="font-weight:600;color:var(--green)">${fmtR(val)}</span>`;
@@ -1306,7 +1309,7 @@ function renderRanking(){
   const meAgentes= enc.reduce((s,o)=>s+(o.real?.agentes||1),0); // total de agentes somados
   const meAgtMed = enc.length>0 ? meAgentes/enc.length : 1;     // média de agentes por OS
   const meMih    = meHoras>0&&meItens>0 ? Math.round(meItens/meAgtMed/meHoras) : 0;
-  const meHorasTotalEquipe = enc.reduce((s,o)=>s+(o.real?.horas||0)*(o.real?.agentes||1),0);
+  const meHorasTotalEquipe = enc.reduce((s,o)=>s+(o.real?.horasEquipe||0),0);
 
   const eu={
     id: currentLider.id,
@@ -1873,10 +1876,12 @@ function construirOsDeSheets(linhas){
     if(!minhaLinha) return;
 
     const data   = g.data;
-    const horas  = parseFloat(minhaLinha[colHoras])||0; // precisão total (ex: 11.7333...)
+    const horas  = parseFloat(minhaLinha[colHoras])||0; // horas desta pessoa
     const agentes= g.rows.length;
+    // Soma horas reais de TODOS os participantes (cada linha tem sua hora individual)
+    const horasEquipe = g.rows.reduce((s, row) => s + (parseFloat(row[colHoras])||0), 0);
     const meta   = String(minhaLinha['META']||'').trim();
-    const metaVal = parseFloat(meta)||0; // valor real da coluna M (ex: R$60, R$10...)
+    const metaVal = parseFloat(meta)||0;
     const bonus  = tipo==='lider' && metaVal > 0;
 
     resultado.push({
@@ -1895,7 +1900,7 @@ function construirOsDeSheets(linhas){
       obs:      '',
       real:{
         et3:0, et6:0, etP:0, k3:0, k6:0, pal:0, skus:0,
-        horas, agentes, obs:'', bonus
+        horas, agentes, horasEquipe, obs:'', bonus
       },
       planilha:{
         horaInicio:   String(minhaLinha['Hora Início']||minhaLinha['Hora Inicio']||''),
@@ -1903,7 +1908,7 @@ function construirOsDeSheets(linhas){
         pausaMin:     parseFloat(minhaLinha['Pausa'])||30,
         transporte:   parseFloat(minhaLinha['TRANS PORTE'])||0,
         lanche:       parseFloat(minhaLinha['LANCHE'])||0,
-        metaVal,                                          // valor real da coluna M
+        metaVal,
         metaAplicavel: bonus,
         totalPagar:   parseFloat(minhaLinha['Total a pagar'])||0,
         pago:         String(minhaLinha['PAGO']||''),
