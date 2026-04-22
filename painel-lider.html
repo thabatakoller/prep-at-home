@@ -1240,17 +1240,12 @@ function renderHistorico(){
     const r=os.real, p=os.planilha||{}, df=new Date(os.data+'T12:00:00').toLocaleDateString('pt-BR');
     const ti=os.mfItens||totalItens(r), mih=(r.horas>0&&ti>0)?Math.round(ti/r.horas):0;
     const isF=os.tipo==='freelancer';
-    const val=calcValorOs(os);
+    const val = calcValorOs(os); // sempre usa totalPagar (col O) como base
     const metaReal = p.metaVal !== undefined ? p.metaVal : (p.metaAplicavel ? BONUS_POR_OS : 0);
-    const valCalculado = Math.round(((r.horas||0)*HC_HORA + (p.transporte||0) + (p.lanche||0) + metaReal) * 100) / 100;
-    // Divergência: coluna O ≠ fórmula recalculada (tolerância R$0.10)
-    // OU coluna O = 0 mas horas > 0 (trabalhador sem pagamento registrado)
-    const divValor = p.totalPagar > 0 && Math.abs((p.totalPagar||0) - valCalculado) > 0.10;
-    const divZero  = (p.totalPagar === 0 || !p.totalPagar) && (r.horas||0) > 0;
-    const divergencia = divValor || divZero;
-    const tooltipMsg = divZero
-      ? `⚠️ Coluna O = R$0 mas ${fmtHoras(r.horas)} trabalhadas. Pagamento não registrado na planilha.`
-      : `⚠️ Col.O: ${fmtR(p.totalPagar)} | Fórmula: ${fmtR(valCalculado)} | Dif: ${fmtR(Math.abs((p.totalPagar||0)-valCalculado))}`;
+    const valFormula = Math.round(((r.horas||0)*HC_HORA + (p.transporte||0) + (p.lanche||0) + metaReal) * 100) / 100;
+    // ⚠️ só aparece quando coluna O existe E diverge da fórmula > R$0.10
+    const divergencia = (p.totalPagar||0) > 0 && Math.abs((p.totalPagar||0) - valFormula) > 0.10;
+    const tooltipMsg = `⚠️ Col.O: ${fmtR(p.totalPagar)} | Fórmula (H×10+K+L+M): ${fmtR(valFormula)} | Dif: ${fmtR(Math.abs((p.totalPagar||0)-valFormula))}`;
     const valorBadge = divergencia
       ? `<span title="${tooltipMsg}" style="color:var(--red);font-weight:600;cursor:help">${fmtR(val)} ⚠️</span>`
       : `<span style="font-weight:600;color:var(--green)">${fmtR(val)}</span>`;
@@ -1695,27 +1690,23 @@ async function carregarDadosReais(){
   const osDeSheets = construirOsDeSheets(planilhaLinhas);
 
   if(osDeSheets.length){
-    // ── Enriquecer com itens (cod 0012) via /v1/serviceOrders ──
-    // OSs encerradas não aparecem no calendário — busca direto por número da OS
+    // ── Enriquecer com itens (cod 0012) via serviceOrders ──
+    // id === number no Multifoco: posso chamar direto sem lookup
     try{
       const osNums = [...new Set(osDeSheets.map(o=>o.num.replace('OS #','')))];
       for(let i=0; i<Math.min(osNums.length,30); i+=5){
         const batch = osNums.slice(i,i+5);
         await Promise.allSettled(batch.map(async osNum=>{
           try{
-            // Busca a OS pelo número para obter ID interno
-            const resOS = await buscarMultifoco(`/v1/serviceOrders?orderNumber[]=${osNum}`);
-            const osItems = resOS?.items || resOS?.data || (Array.isArray(resOS)?resOS:[]);
-            if(!osItems.length) return;
-            const osId = osItems[0]?.id;
-            if(!osId) return;
-            // Busca produtos/serviços da OS
-            const ps = await buscarMultifoco(`/v1/serviceOrders/${osId}/view-productsServices`);
-            const psItems = ps?.items || ps?.data || (Array.isArray(ps)?ps:[]);
+            // endpoint correto: /productsServices (sem "view-"), id === number
+            const ps = await buscarMultifoco(`/v1/serviceOrders/${osNum}/productsServices`);
+            // estrutura: { items: { productsServices: [...] } }
+            const psItems = ps?.items?.productsServices || ps?.productsServices || ps?.items || (Array.isArray(ps)?ps:[]);
             const item0012 = psItems.find(it=>String(it.code||it.cod||'').trim()==='0012');
             if(item0012){
-              const qtd = parseFloat(item0012.amount||item0012.quantity||item0012.qtd||0);
-              osDeSheets.forEach(o=>{ if(o.num==='OS #'+osNum) o.mfItens=qtd; });
+              // amount pode vir como string ("874") ou número
+              const qtd = parseFloat(String(item0012.amount||item0012.quantity||item0012.qtd||'0'));
+              if(qtd > 0) osDeSheets.forEach(o=>{ if(o.num==='OS #'+osNum) o.mfItens=qtd; });
             }
           } catch(e){}
         }));
