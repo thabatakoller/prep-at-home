@@ -656,8 +656,70 @@ textarea.ef-input{resize:vertical;min-height:70px}
 /* ════════════════════════════════════════════════════
    ⚙️  CONFIGURAÇÕES GERAIS
 ════════════════════════════════════════════════════ */
-const BONUS_POR_OS = 60;   // R$ bônus por OS sem erro
-const HC_HORA      = 10;   // R$ por hora por agente (remuneração interna)
+const BONUS_POR_OS = 60;   // R$ bônus por OS sem erro (líder)
+const HC_HORA      = 10;   // R$ por hora (fallback se planilha não tiver valor)
+const DATA_CORTE   = '2026-04-01'; // Só OSs a partir desta data
+
+/* ════════════════════════════════════════════════════
+   📋  BACKLOG — PRÓXIMAS MELHORIAS
+
+   [CRÍTICO]
+   ✅ Valor do líder: usar coluna "Total a pagar" (col O) da planilha
+      individualmente — não somar toda a equipe
+   ✅ Histórico: mostrar apenas OSs a partir de 01/04/2026
+   ✅ /v1/calendar: agora passa start e end obrigatórios
+
+   [MULTIFOCO — OSs ABERTAS]
+   - Endpoint /v1/calendar retorna dados por data
+     Testar: GET /v1/calendar?start=2026-04-01&end=hoje&technician[]=2
+     Para OSs abertas do líder logado, cruzar pelo nome no campo "title"
+   - Endpoint /v1/service-orders retorna vazio sem filtros
+     Investigar parâmetros corretos com suporte Multifoco
+
+   [RANKING — GAMIFICAÇÃO]
+   - Itens preparados: virão do endpoint de serviços do Multifoco
+     (código de serviço por OS) — backlog: identificar endpoint correto
+   - Divisão por hora: coluna N da planilha (Qtd Horas)
+   - Peso por seller/tipo de produto: planilha histórica base por seller
+     (Tha vai compartilhar acesso quando chegar nessa fase)
+   - Pontuação quando líder ultrapassar X% acima da média de produção
+   - Normalizar por complexidade de SKUs do seller
+
+   [PREVENÇÃO DE CORRUPÇÃO — TRAVA OPERACIONAL]
+   - Ao encerrar OS, sistema compara volume real informado vs volume
+     agendado (seller pagou por X itens na reserva)
+   - Se volume real > volume agendado em mais de Y%:
+     → Bloquear encerramento e exigir justificativa
+     → Notificar coordenação via WhatsApp automaticamente
+   - Limite sugerido: tolerância de +10% sem trava; acima disso, alerta
+   - Registrar no histórico qualquer divergência com data e hora
+
+   [GAMIFICAÇÃO — MODELO DE PONTUAÇÃO — A DEFINIR]
+   - Variáveis sugeridas para média ponderada:
+     * Itens/hora (peso maior)
+     * % acima da média histórica do seller (normaliza dificuldade)
+     * OSs sem erro (bônus de qualidade)
+     * Qtd de sellers diferentes atendidos no mês
+     * Pontualidade (hora chegada vs hora agendada)
+   - Premiações mensais: 🥇 R$X, 🥈 R$Y, 🥉 R$Z — a definir
+   - Ranking visível para todos os líderes (motivação por transparência)
+
+   [NF CONSOLIDADA — LÍDER + FREELANCER]
+   - NF mensal soma: participações como líder + como freelancer
+   - RPS individual por OS como comprovante interno
+   - Assinatura eletrônica com validade jurídica: ClickSign ou DocuSign
+
+   [LOGIN VIA MULTIFOCO]
+   - Eliminar cadastro paralelo de usuário/senha
+   - Usar credenciais do app Multifoco para autenticar líderes
+   - Depende de endpoint de autenticação da API Multifoco
+
+   [PAINEL DO SELLER — FASE 4]
+   - Histórico de OSs do seller
+   - Saldo em aberto + link de pagamento
+   - Reagendamento com dados pré-preenchidos
+   - Login via código de conjunto (sem criar conta)
+════════════════════════════════════════════════════ */
 
 /* ════════════════════════════════════════════════════
    👥  13 LÍDERES CADASTRADOS
@@ -787,7 +849,13 @@ function fmtR(v){ return 'R$\u202f'+v.toLocaleString('pt-BR',{minimumFractionDig
 function totalItens(r){ return (r.et3||0)+(r.et6||0)+(r.etP||0)+(r.k3||0)+(r.k6||0); }
 function calcValorOs(os){
   if(!os.real) return 0;
-  const base = (os.real.horas||0) * (os.real.agentes||1) * HC_HORA;
+  // Usa o valor real da planilha (coluna "Total a pagar" = coluna O)
+  // que já é o valor INDIVIDUAL do líder, não da equipe toda
+  if(os.planilha?.totalPagar && os.planilha.totalPagar > 0){
+    return os.planilha.totalPagar;
+  }
+  // Fallback: calcula pela hora individual (sem multiplicar por agentes)
+  const base = (os.real.horas||0) * HC_HORA;
   const bonus = (os.tipo==='lider' && os.real.bonus) ? BONUS_POR_OS : 0;
   return base + bonus;
 }
@@ -1413,7 +1481,6 @@ function imprimirRPS(){
    4. Tipo: App da Web | Executar como: Você | Acesso: Qualquer pessoa
    5. Cole a URL gerada em APPS_SCRIPT_URL abaixo
 ════════════════════════════════════════════════════ */
-const DATA_CORTE    = '2026-04-01'; // só OSs a partir desta data
 const MF_TOKEN      = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL3JvYm90Lm11bHRpZm9jby5hcHAiLCJpYXQiOjE3NzY3MTQzNzAsIm5iZiI6MTc3NjcxNDM3MCwianRpIjoiOWhQY2tyTHh6bGZqVmM3ciIsInN1YiI6IjE2MTkzIn0.hhapUHZYFqLfKyDomMSazYiOycTQgB3B-Py_MrWsMSE';
 const MF_BASE = 'https://prep-at-home.vercel.app/api/multifoco?endpoint=';
 const MF_TECNICO    = 2;
@@ -1472,6 +1539,14 @@ async function buscarMultifoco(endpoint){
   });
   if(!res.ok) throw new Error('HTTP '+res.status);
   return await res.json();
+}
+
+async function buscarCalendarioMF(){
+  // /v1/calendar exige start e end obrigatórios
+  const hoje = new Date();
+  const fim = hoje.toISOString().slice(0,10);
+  const inicio = DATA_CORTE; // 2026-04-01
+  return await buscarMultifoco(`/v1/calendar?start=${inicio}&end=${fim}&technician[]=${MF_TECNICO}`);
 }
 
 /* ═══ MAPEAR OS DO MULTIFOCO PARA O FORMATO DO PAINEL ═══ */
@@ -1560,7 +1635,7 @@ async function carregarDadosReais(){
   setLoadStep(0,'active');
   try{
     const [resCalendar, resOS] = await Promise.allSettled([
-      buscarMultifoco('/v1/calendar'),
+      buscarCalendarioMF(),
       buscarMultifoco('/v1/service-orders')
     ]);
     debugData.calendar      = resCalendar.status==='fulfilled' ? resCalendar.value : {erro: resCalendar.reason?.message};
@@ -1656,13 +1731,14 @@ function construirOsDeSheets(linhas){
     return s.slice(0,10);
   }
 
-  // Agrupa linhas por número de OS
+  // Agrupa linhas por número de OS — filtra apenas a partir de DATA_CORTE
   const grupos = {};
   linhas.forEach(row=>{
     const osNum = String(row[colOS]||'').trim();
     if(!osNum||osNum==='0') return;
     const data = normData(row[colData]);
     if(!data) return;
+    if(data < DATA_CORTE) return; // ← só a partir de 01/04/2026
     if(!grupos[osNum]) grupos[osNum]={rows:[], lider:'', cliente:'', data};
     grupos[osNum].rows.push(row);
     const nomeLider = String(row[colLider]||'').toUpperCase().trim();
