@@ -490,11 +490,18 @@ textarea.ef-input{resize:vertical;min-height:70px}
     <div class="page" id="page-ranking">
       <div style="margin-bottom:24px">
         <h2 style="font-size:22px;font-weight:800;letter-spacing:-.5px;margin-bottom:4px">Ranking de Produção</h2>
-        <p style="font-size:13px;color:var(--mid)">Líderes ordenados por <strong>média de itens por hora</strong> neste mês — considera o histórico de cada seller</p>
+        <p style="font-size:13px;color:var(--mid)">Líderes ordenados por <strong>média de itens por hora</strong> — considera o histórico de cada seller</p>
+      </div>
+      <!-- Filtro de mês -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+        <button onclick="rankingMesNav(-1)" style="width:34px;height:34px;border-radius:50%;border:1px solid var(--border);background:white;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center">‹</button>
+        <div id="rankingMesLabel" style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;min-width:140px;text-align:center"></div>
+        <button onclick="rankingMesNav(+1)" style="width:34px;height:34px;border-radius:50%;border:1px solid var(--border);background:white;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center">›</button>
+        <button onclick="rankingMesHoje()" style="padding:6px 16px;border-radius:100px;border:1px solid var(--border);background:white;cursor:pointer;font-size:11px;font-weight:600;color:var(--mid)">Hoje</button>
       </div>
       <div style="background:var(--navy);border-radius:14px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;gap:12px">
         <span style="font-size:20px">📊</span>
-        <div style="font-size:12px;color:rgba(255,255,255,.7);line-height:1.5">A métrica é <strong style="color:white">itens preparados ÷ horas trabalhadas</strong>. Sellers com mais SKUs naturalmente produzem menos por hora — isso já está normalizado pelo histórico de cada cliente.</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.7);line-height:1.5">Métrica: <strong style="color:white">itens ÷ agentes ÷ horas</strong> — média de produção por pessoa por hora. Para validar: total itens ÷ (agentes × horas) deve dar o mesmo resultado.</div>
       </div>
       <div class="ranking-list" id="rankingList"></div>
     </div>
@@ -1264,36 +1271,91 @@ function renderHistorico(){
   }).join('');
 }
 
-/* ═══ RANKING — itens por hora ═══ */
+/* ═══ RANKING — mês atual selecionado ═══ */
+let rankingMesOffset = 0; // 0 = mês atual, -1 = mês anterior, etc.
+
+function rankingMesNav(delta){
+  rankingMesOffset += delta;
+  // Não permite avançar além do mês atual
+  if(rankingMesOffset > 0) rankingMesOffset = 0;
+  renderRanking();
+}
+function rankingMesHoje(){ rankingMesOffset = 0; renderRanking(); }
+
+function getRankingMes(){
+  const d = new Date();
+  d.setDate(1);
+  d.setMonth(d.getMonth() + rankingMesOffset);
+  return d.toISOString().slice(0,7); // "yyyy-MM"
+}
+
 function renderRanking(){
   const c=document.getElementById('rankingList');
-  const enc=osData.filter(o=>o.lider===currentLider.id&&o.status==='encerrada'&&o.tipo==='lider');
-  const meItens=enc.reduce((s,o)=>s+(o.mfItens||totalItens(o.real||{})),0);
-  const meHoras=enc.reduce((s,o)=>s+(o.real?.horas||0),0);
-  const meAgentes=enc.reduce((s,o)=>s+(o.real?.agentes||1),0);
-  const meMih=meHoras>0&&meItens>0?Math.round(meItens/(meAgentes/enc.length||1)/meHoras):0;
+  const mes = getRankingMes();
+  const mesLabel = new Date(mes+'-02').toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+  const lbl = document.getElementById('rankingMesLabel');
+  if(lbl) lbl.textContent = mesLabel.charAt(0).toUpperCase()+mesLabel.slice(1);
 
-  const eu={id:currentLider.id,nome:currentLider.nome,cor:currentLider.cor,mih:meMih,itens:meItens,horas:meHoras};
+  // OSs do líder logado no mês selecionado (só como líder)
+  const enc=osData.filter(o=>o.lider===currentLider.id&&o.status==='encerrada'&&o.tipo==='lider'&&o.data.startsWith(mes));
+
+  // Calcula métricas do mês para o líder logado
+  const meItens  = enc.reduce((s,o)=>s+(o.mfItens||totalItens(o.real||{})),0);
+  const meHoras  = enc.reduce((s,o)=>s+(o.real?.horas||0),0);
+  const meAgentes= enc.reduce((s,o)=>s+(o.real?.agentes||1),0); // total de agentes somados
+  const meAgtMed = enc.length>0 ? meAgentes/enc.length : 1;     // média de agentes por OS
+  const meMih    = meHoras>0&&meItens>0 ? Math.round(meItens/meAgtMed/meHoras) : 0;
+  const meHorasTotalEquipe = enc.reduce((s,o)=>s+(o.real?.horas||0)*(o.real?.agentes||1),0);
+
+  const eu={
+    id: currentLider.id,
+    nome: currentLider.nome,
+    cor: currentLider.cor,
+    mih: meMih,
+    itens: meItens,
+    horas: meHoras,
+    horasTotalEquipe: meHorasTotalEquipe,
+    agentes: meAgentes,
+    osCount: enc.length
+  };
+
   const outros=RANKING_DEMO
-    .filter(r=>r.id!==currentLider.id) // evita duplicata do líder logado
-    .map(r=>{const l=LIDERES.find(l=>l.id===r.id);return{...r,nome:l?l.nome:'Líder',cor:l?l.cor:'#888',mih:r.mediaItensHora};});
+    .filter(r=>r.id!==currentLider.id)
+    .map(r=>{const l=LIDERES.find(l=>l.id===r.id); return{...r,nome:l?l.nome:'Líder',cor:l?l.cor:'#888',mih:r.mediaItensHora,horas:0,horasTotalEquipe:0,agentes:0,osCount:0};});
+
   const todos=[eu,...outros].sort((a,b)=>b.mih-a.mih);
   const maxMih=Math.max(...todos.map(t=>t.mih),1);
   const medals=['🥇','🥈','🥉'];
   const posClass=['gold','silver','bronze'];
-  c.innerHTML=todos.map((l,i)=>`
-    <div class="ranking-item${l.id===currentLider.id?' me':''}">
+
+  c.innerHTML=todos.map((l,i)=>{
+    const isMe = l.id===currentLider.id;
+    // Linha de detalhes para validação (só aparece para o líder logado)
+    const detalheValidacao = isMe && l.itens>0 ? `
+      <div style="margin-top:10px;padding:10px 14px;background:var(--light);border-radius:10px;font-size:11px;color:var(--mid);line-height:1.8">
+        <strong style="color:var(--dark)">Validação:</strong>
+        ${l.itens.toLocaleString('pt-BR')} itens ÷ ${l.horasTotalEquipe.toFixed(1)}h equipe
+        = <strong style="color:var(--dark)">${l.horasTotalEquipe>0?Math.round(l.itens/l.horasTotalEquipe):0}/h bruto</strong>
+        &nbsp;·&nbsp;
+        ${l.itens.toLocaleString('pt-BR')} itens ÷ ${(l.agentes/Math.max(l.osCount,1)).toFixed(1)} ag. ÷ ${l.horas.toFixed(1)}h
+        = <strong style="color:var(--orange)">${l.mih}/h por pessoa</strong>
+        &nbsp;·&nbsp; ${l.osCount} OS · ${l.horas.toFixed(1)}h total
+      </div>` : '';
+    return `
+    <div class="ranking-item${isMe?' me':''}">
       <div class="ranking-pos ${posClass[i]||''}">${medals[i]||i+1}</div>
       <div class="ranking-avatar" style="background:${l.cor}">${initials(l.nome)}</div>
-      <div class="ranking-info">
-        <div class="ranking-name">${l.nome.split(' ')[0]+' '+l.nome.split(' ').pop()}${l.id===currentLider.id?' <span style="font-size:10px;color:var(--orange);font-weight:600">← você</span>':''}</div>
-        <div class="ranking-sub">${l.mih} itens/hora · ${(l.itens||l.totalItens||0).toLocaleString('pt-BR')} total</div>
+      <div class="ranking-info" style="flex:1">
+        <div class="ranking-name">${l.nome.split(' ')[0]+' '+l.nome.split(' ').pop()}${isMe?' <span style="font-size:10px;color:var(--orange);font-weight:600">← você</span>':''}</div>
+        <div class="ranking-sub">${l.mih} it/pessoa/h · ${(l.itens||l.totalItens||0).toLocaleString('pt-BR')} itens${isMe?' · '+l.horas.toFixed(1)+'h':''}</div>
+        ${detalheValidacao}
       </div>
       <div class="ranking-bar-wrap">
         <div class="ranking-bar"><div class="ranking-bar-fill" style="width:${Math.round(l.mih/maxMih*100)}%"></div></div>
         <div class="ranking-num">${l.mih} <span style="font-size:11px;font-weight:400;color:var(--mid)">it/h</span></div>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 /* ═══ BÔNUS ═══ */
