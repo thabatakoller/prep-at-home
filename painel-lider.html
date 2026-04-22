@@ -229,8 +229,8 @@ textarea.ef-input{resize:vertical;min-height:70px}
 
 /* HISTORICO */
 .hist-table{background:white;border-radius:16px;border:1px solid var(--border);overflow:hidden}
-.hist-header{display:grid;grid-template-columns:100px 1fr 80px 80px 80px 90px 80px;gap:10px;padding:12px 20px;background:var(--light);border-bottom:1px solid var(--border);font-size:10px;font-weight:600;color:var(--mid);letter-spacing:.8px;text-transform:uppercase}
-.hist-row{display:grid;grid-template-columns:100px 1fr 80px 80px 80px 90px 80px;gap:10px;padding:14px 20px;border-bottom:1px solid var(--border);font-size:12px;align-items:center;transition:background .15s}
+.hist-header{display:grid;grid-template-columns:100px 1fr 80px 60px 70px 60px 80px 80px;gap:8px;padding:12px 20px;background:var(--light);border-bottom:1px solid var(--border);font-size:10px;font-weight:600;color:var(--mid);letter-spacing:.8px;text-transform:uppercase}
+.hist-row{display:grid;grid-template-columns:100px 1fr 80px 60px 70px 60px 80px 80px;gap:8px;padding:14px 20px;border-bottom:1px solid var(--border);font-size:12px;align-items:center;transition:background .15s}
 .hist-row:last-child{border:none}
 .hist-row:hover{background:var(--light)}
 .hist-row.freelancer-row{background:#F5F3FF}
@@ -481,7 +481,7 @@ textarea.ef-input{resize:vertical;min-height:70px}
         <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--mid)"><div style="width:12px;height:12px;background:#F5F3FF;border-radius:3px;border:1px solid rgba(91,33,182,.15)"></div>Como freelancer</div>
       </div>
       <div class="hist-table">
-        <div class="hist-header"><span>OS Multifoco</span><span>Seller</span><span>Data</span><span>Itens</span><span>Horas</span><span>Itens/h</span><span>Função</span></div>
+        <div class="hist-header"><span>OS Multifoco</span><span>Seller</span><span>Data</span><span>Itens</span><span>Horas</span><span>Itens/h</span><span>Valor</span><span>Função</span></div>
         <div id="histBody"></div>
       </div>
     </div>
@@ -516,7 +516,7 @@ textarea.ef-input{resize:vertical;min-height:70px}
       </div>
       <div class="section-header"><h3 class="section-title">Detalhamento</h3></div>
       <div class="hist-table" style="margin-top:12px">
-        <div class="hist-header"><span>OS Multifoco</span><span>Seller</span><span>Data</span><span>Itens</span><span>Horas</span><span>Itens/h</span><span>Bônus</span></div>
+        <div class="hist-header"><span>OS Multifoco</span><span>Seller</span><span>Data</span><span>Itens</span><span>Horas</span><span>Itens/h</span><span>Valor</span><span>Bônus</span></div>
         <div id="bonusHistBody"></div>
       </div>
     </div>
@@ -1238,16 +1238,26 @@ function renderHistorico(){
   const c=document.getElementById('histBody');
   if(!enc.length){ c.innerHTML=`<div class="empty"><div class="empty-icon">📂</div><div class="empty-title">Sem histórico ainda</div></div>`; return; }
   c.innerHTML=enc.map(os=>{
-    const r=os.real, df=new Date(os.data+'T12:00:00').toLocaleDateString('pt-BR');
-    const ti=totalItens(r), mih=r.horas>0?Math.round(ti/r.horas):0;
+    const r=os.real, p=os.planilha||{}, df=new Date(os.data+'T12:00:00').toLocaleDateString('pt-BR');
+    const ti=os.mfItens||totalItens(r), mih=(r.horas>0&&ti>0)?Math.round(ti/r.horas):0;
     const isF=os.tipo==='freelancer';
+    const val=calcValorOs(os);
+    // Validação: recalcula o valor esperado pela fórmula da planilha
+    // =(QtdHoras*10) + TRANS_PORTE + LANCHE + META
+    const metaNum=parseFloat(String(p.metaAplicavel?BONUS_POR_OS:0)||'0');
+    const valCalculado=(r.horas||0)*HC_HORA+(p.transporte||0)+(p.lanche||0)+metaNum;
+    const divergencia=p.totalPagar>0 && Math.abs(val-valCalculado)>0.5;
+    const valorBadge=divergencia
+      ? `<span title="⚠️ Coluna O (${fmtR(p.totalPagar)}) difere do calculado (${fmtR(valCalculado)}). Verificar planilha." style="color:var(--red);font-weight:600;cursor:help">${fmtR(val)} ⚠️</span>`
+      : `<span style="font-weight:600;color:var(--green)">${fmtR(val)}</span>`;
     return `<div class="hist-row${isF?' freelancer-row':''}">
       <span class="hist-os">${os.num}</span>
       <span><div style="font-weight:500">${os.empresa}</div><div style="font-size:11px;color:var(--mid)">${os.cod}</div></span>
       <span>${df}</span>
-      <span>${ti.toLocaleString('pt-BR')}</span>
+      <span>${ti>0?ti.toLocaleString('pt-BR'):'—'}</span>
       <span>${fmtHoras(r.horas)}</span>
-      <span>${mih}/h</span>
+      <span>${mih>0?mih+'/h':'—'}</span>
+      <span>${valorBadge}</span>
       <span>${isF?'<span class="os-badge freelancer">Freelancer</span>':(r.bonus?'<span class="os-badge bonus">+R$'+BONUS_POR_OS+'</span>':'<span style="font-size:11px;color:var(--mid)">Líder s/ bônus</span>')}</span>
     </div>`;
   }).join('');
@@ -1295,14 +1305,16 @@ function renderBonus(){
   const c=document.getElementById('bonusHistBody');
   if(!encLider.length){ c.innerHTML=`<div class="empty"><div class="empty-icon">🏆</div><div class="empty-title">Nenhuma OS encerrada este mês como líder</div></div>`; return; }
   c.innerHTML=encLider.map(os=>{
-    const r=os.real, ti=totalItens(r), mih=r.horas>0?Math.round(ti/r.horas):0, df=new Date(os.data+'T12:00:00').toLocaleDateString('pt-BR');
+    const r=os.real, ti=os.mfItens||totalItens(r), mih=(r.horas>0&&ti>0)?Math.round(ti/r.horas):0, df=new Date(os.data+'T12:00:00').toLocaleDateString('pt-BR');
+    const val=calcValorOs(os);
     return `<div class="hist-row">
       <span class="hist-os">${os.num}</span>
       <span><div style="font-weight:500">${os.empresa}</div><div style="font-size:11px;color:var(--mid)">${os.cod}</div></span>
       <span>${df}</span>
-      <span>${ti.toLocaleString('pt-BR')}</span>
+      <span>${ti>0?ti.toLocaleString('pt-BR'):'—'}</span>
       <span>${fmtHoras(r.horas)}</span>
-      <span>${mih}/h</span>
+      <span>${mih>0?mih+'/h':'—'}</span>
+      <span style="font-weight:600;color:var(--green)">${fmtR(val)}</span>
       <span>${r.bonus?'<span class="os-badge bonus">+R$'+BONUS_POR_OS+'</span>':'<span style="font-size:11px;color:var(--mid)">Sem bônus</span>'}</span>
     </div>`;
   }).join('');
@@ -1679,7 +1691,29 @@ async function carregarDadosReais(){
   const osDeSheets = construirOsDeSheets(planilhaLinhas);
 
   if(osDeSheets.length){
-    // Usa dados reais: OS encerradas da planilha + OS abertas do Multifoco (se existirem)
+    // Enriquecer com itens (cod 0012) do Multifoco para cada OS do calendário
+    try{
+      const calItems = debugData.calendar?.items || debugData.calendar?.data || [];
+      if(Array.isArray(calItems) && calItems.length){
+        for(let i=0; i<Math.min(calItems.length,20); i+=5){
+          const batch = calItems.slice(i,i+5);
+          await Promise.allSettled(batch.map(async calItem=>{
+            try{
+              const ps = await buscarMultifoco(`/v1/calendar/${calItem.id}/productsServices`);
+              const items = ps?.items || ps?.data || (Array.isArray(ps)?ps:[]);
+              const item0012 = items.find(it=>String(it.code||it.cod||'').trim()==='0012');
+              if(item0012){
+                const qtd = parseFloat(item0012.amount||item0012.quantity||0);
+                const osNum = String(calItem.serviceOrderNumber||'');
+                osDeSheets.forEach(os=>{ if(os.num==='OS #'+osNum) os.mfItens=qtd; });
+              }
+            } catch(e){}
+          }));
+        }
+      }
+    } catch(e){ console.warn('Itens MF:', e.message); }
+
+    // Usa dados reais: OS encerradas da planilha + OS abertas do Multifoco
     const osAbertasMF = (() => {
       try{
         const items = debugData.calendar?.items || debugData.calendar?.data || [];
