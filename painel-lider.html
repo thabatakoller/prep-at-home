@@ -229,8 +229,8 @@ textarea.ef-input{resize:vertical;min-height:70px}
 
 /* HISTORICO */
 .hist-table{background:white;border-radius:16px;border:1px solid var(--border);overflow:hidden}
-.hist-header{display:grid;grid-template-columns:100px 1fr 80px 60px 70px 60px 80px 80px;gap:8px;padding:12px 20px;background:var(--light);border-bottom:1px solid var(--border);font-size:10px;font-weight:600;color:var(--mid);letter-spacing:.8px;text-transform:uppercase}
-.hist-row{display:grid;grid-template-columns:100px 1fr 80px 60px 70px 60px 80px 80px;gap:8px;padding:14px 20px;border-bottom:1px solid var(--border);font-size:12px;align-items:center;transition:background .15s}
+.hist-header{display:grid;grid-template-columns:100px 1fr 80px 60px 70px 50px 60px 80px 80px;gap:8px;padding:12px 20px;background:var(--light);border-bottom:1px solid var(--border);font-size:10px;font-weight:600;color:var(--mid);letter-spacing:.8px;text-transform:uppercase}
+.hist-row{display:grid;grid-template-columns:100px 1fr 80px 60px 70px 50px 60px 80px 80px;gap:8px;padding:14px 20px;border-bottom:1px solid var(--border);font-size:12px;align-items:center;transition:background .15s}
 .hist-row:last-child{border:none}
 .hist-row:hover{background:var(--light)}
 .hist-row.freelancer-row{background:#F5F3FF}
@@ -481,7 +481,7 @@ textarea.ef-input{resize:vertical;min-height:70px}
         <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--mid)"><div style="width:12px;height:12px;background:#F5F3FF;border-radius:3px;border:1px solid rgba(91,33,182,.15)"></div>Como freelancer</div>
       </div>
       <div class="hist-table">
-        <div class="hist-header"><span>OS Multifoco</span><span>Seller</span><span>Data</span><span>Itens</span><span>Horas</span><span>Itens/h</span><span>Valor</span><span>Função</span></div>
+        <div class="hist-header"><span>OS Multifoco</span><span>Seller</span><span>Data</span><span>Itens</span><span>Horas</span><span>Ag.</span><span>Itens/h</span><span>Valor</span><span>Função</span></div>
         <div id="histBody"></div>
       </div>
     </div>
@@ -523,7 +523,7 @@ textarea.ef-input{resize:vertical;min-height:70px}
       </div>
       <div class="section-header"><h3 class="section-title">Detalhamento</h3></div>
       <div class="hist-table" style="margin-top:12px">
-        <div class="hist-header"><span>OS Multifoco</span><span>Seller</span><span>Data</span><span>Itens</span><span>Horas</span><span>Itens/h</span><span>Valor</span><span>Bônus</span></div>
+        <div class="hist-header"><span>OS Multifoco</span><span>Seller</span><span>Data</span><span>Itens</span><span>Horas</span><span>Ag.</span><span>Itens/h</span><span>Valor</span><span>Bônus</span></div>
         <div id="bonusHistBody"></div>
       </div>
     </div>
@@ -1264,6 +1264,7 @@ function renderHistorico(){
       <span>${df}</span>
       <span>${ti>0?ti.toLocaleString('pt-BR'):'—'}</span>
       <span>${fmtHoras(r.horas)}</span>
+      <span style="color:var(--mid)">${r.agentes||1}</span>
       <span>${mih>0?mih+'/h':'—'}</span>
       <span>${valorBadge}</span>
       <span>${isF?'<span class="os-badge freelancer">Freelancer</span>':(r.bonus?'<span class="os-badge bonus">+R$'+BONUS_POR_OS+'</span>':'<span style="font-size:11px;color:var(--mid)">Líder s/ bônus</span>')}</span>
@@ -1332,14 +1333,19 @@ function renderRanking(){
     const isMe = l.id===currentLider.id;
     // Linha de detalhes para validação (só aparece para o líder logado)
     const detalheValidacao = isMe && l.itens>0 ? `
-      <div style="margin-top:10px;padding:10px 14px;background:var(--light);border-radius:10px;font-size:11px;color:var(--mid);line-height:1.8">
+      <div style="margin-top:10px;padding:10px 14px;background:var(--light);border-radius:10px;font-size:11px;color:var(--mid);line-height:2">
         <strong style="color:var(--dark)">Validação:</strong>
-        ${l.itens.toLocaleString('pt-BR')} itens ÷ ${l.horasTotalEquipe.toFixed(1)}h equipe
-        = <strong style="color:var(--dark)">${l.horasTotalEquipe>0?Math.round(l.itens/l.horasTotalEquipe):0}/h bruto</strong>
-        &nbsp;·&nbsp;
-        ${l.itens.toLocaleString('pt-BR')} itens ÷ ${(l.agentes/Math.max(l.osCount,1)).toFixed(1)} ag. ÷ ${l.horas.toFixed(1)}h
-        = <strong style="color:var(--orange)">${l.mih}/h por pessoa</strong>
-        &nbsp;·&nbsp; ${l.osCount} OS · ${l.horas.toFixed(1)}h total
+        <span>${l.itens.toLocaleString('pt-BR')} itens</span>
+        <span style="margin:0 4px;opacity:.4">÷</span>
+        <span><strong style="color:var(--dark)">${l.agentes} agentes</strong> (${l.osCount} OS)</span>
+        <span style="margin:0 4px;opacity:.4">÷</span>
+        <span>${l.horas.toFixed(1)}h (horas do líder/OS)</span>
+        <span style="margin:0 4px;opacity:.4">=</span>
+        <strong style="color:var(--orange)">${l.mih}/h por pessoa</strong>
+        <br>
+        <span style="opacity:.7">Horas totais estimadas da equipe: ${l.horasTotalEquipe.toFixed(1)}h
+        · Bruto: ${l.horasTotalEquipe>0?Math.round(l.itens/l.horasTotalEquipe):0}/h
+        <em>(pode diferir ±3h da planilha pois usa horas do líder × agentes)</em></span>
       </div>` : '';
     return `
     <div class="ranking-item${isMe?' me':''}">
@@ -1377,6 +1383,7 @@ function renderBonus(){
       <span>${df}</span>
       <span>${ti>0?ti.toLocaleString('pt-BR'):'—'}</span>
       <span>${fmtHoras(r.horas)}</span>
+      <span style="color:var(--mid)">${r.agentes||1}</span>
       <span>${mih>0?mih+'/h':'—'}</span>
       <span style="font-weight:600;color:var(--green)">${fmtR(val)}</span>
       <span>${r.bonus?'<span class="os-badge bonus">+R$'+BONUS_POR_OS+'</span>':'<span style="font-size:11px;color:var(--mid)">Sem bônus</span>'}</span>
