@@ -1243,12 +1243,12 @@ function renderHistorico(){
     const isF=os.tipo==='freelancer';
     const val=calcValorOs(os);
     // Validação: recalcula o valor esperado pela fórmula da planilha
-    // =(QtdHoras*10) + TRANS_PORTE + LANCHE + META
-    const metaNum=parseFloat(String(p.metaAplicavel?BONUS_POR_OS:0)||'0');
-    const valCalculado=(r.horas||0)*HC_HORA+(p.transporte||0)+(p.lanche||0)+metaNum;
-    const divergencia=p.totalPagar>0 && Math.abs(val-valCalculado)>0.5;
-    const valorBadge=divergencia
-      ? `<span title="⚠️ Coluna O (${fmtR(p.totalPagar)}) difere do calculado (${fmtR(valCalculado)}). Verificar planilha." style="color:var(--red);font-weight:600;cursor:help">${fmtR(val)} ⚠️</span>`
+    // =(QtdHoras*R$10) + TRANS_PORTE + LANCHE + META (valor real da coluna M)
+    const metaReal = p.metaVal !== undefined ? p.metaVal : (p.metaAplicavel ? BONUS_POR_OS : 0);
+    const valCalculado = Math.round(((r.horas||0)*HC_HORA + (p.transporte||0) + (p.lanche||0) + metaReal) * 100) / 100;
+    const divergencia = p.totalPagar > 0 && Math.abs((p.totalPagar||0) - valCalculado) > 0.10;
+    const valorBadge = divergencia
+      ? `<span title="⚠️ Col.O planilha: ${fmtR(p.totalPagar)} | Fórmula recalculada: ${fmtR(valCalculado)} | Diferença: ${fmtR(Math.abs((p.totalPagar||0)-valCalculado))}. Verificar planilha." style="color:var(--red);font-weight:600;cursor:help">${fmtR(val)} ⚠️</span>`
       : `<span style="font-weight:600;color:var(--green)">${fmtR(val)}</span>`;
     return `<div class="hist-row${isF?' freelancer-row':''}">
       <span class="hist-os">${os.num}</span>
@@ -1802,14 +1802,14 @@ function construirOsDeSheets(linhas){
     if(!minhaLinha) return;
 
     const data   = g.data;
-    const horas  = parseFloat(minhaLinha[colHoras])||0;
+    const horas  = parseFloat(minhaLinha[colHoras])||0; // precisão total (ex: 11.7333...)
     const agentes= g.rows.length;
     const meta   = String(minhaLinha['META']||'').trim();
-    // META preenchida por dia — bônus se META > 0 e não for traço
-    const bonus  = tipo==='lider' && meta!=='' && meta!=='0' && meta!=='-' && !isNaN(parseFloat(meta));
+    const metaVal = parseFloat(meta)||0; // valor real da coluna M (ex: R$60, R$10...)
+    const bonus  = tipo==='lider' && metaVal > 0;
 
     resultado.push({
-      id:       'sh_'+chave,  // inclui data para evitar colisão
+      id:       'sh_'+chave,
       num:      'OS #'+osNum,
       lider:    currentLider.id,
       tipo,
@@ -1832,7 +1832,8 @@ function construirOsDeSheets(linhas){
         pausaMin:     parseFloat(minhaLinha['Pausa'])||30,
         transporte:   parseFloat(minhaLinha['TRANS PORTE'])||0,
         lanche:       parseFloat(minhaLinha['LANCHE'])||0,
-        metaAplicavel:bonus,
+        metaVal,                                          // valor real da coluna M
+        metaAplicavel: bonus,
         totalPagar:   parseFloat(minhaLinha['Total a pagar'])||0,
         pago:         String(minhaLinha['PAGO']||''),
         status:       String(minhaLinha['Status']||'')
