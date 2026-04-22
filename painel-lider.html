@@ -1099,7 +1099,9 @@ function renderOsCard(os){
 
 function renderEncerrada(os){
   const r=os.real, total=totalItens(r);
-  const mih=r.horas>0?Math.round(total/r.horas):0;
+  const mfTi = os.mfItens||total;
+  const agts = r.agentes||1;
+  const mih=r.horas>0&&mfTi>0?Math.round(mfTi/agts/r.horas):0;
   return `<div style="margin-top:18px;background:var(--green-l);border-radius:14px;padding:20px;border:1px solid rgba(26,122,74,.15)">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
       <span style="font-size:20px">✅</span>
@@ -1238,7 +1240,7 @@ function renderHistorico(){
   if(!enc.length){ c.innerHTML=`<div class="empty"><div class="empty-icon">📂</div><div class="empty-title">Sem histórico ainda</div></div>`; return; }
   c.innerHTML=enc.map(os=>{
     const r=os.real, p=os.planilha||{}, df=new Date(os.data+'T12:00:00').toLocaleDateString('pt-BR');
-    const ti=os.mfItens||totalItens(r), mih=(r.horas>0&&ti>0)?Math.round(ti/r.horas):0;
+    const ti=os.mfItens||totalItens(r), agts=(r.agentes||1), mih=(r.horas>0&&ti>0&&agts>0)?Math.round(ti/agts/r.horas):0;
     const isF=os.tipo==='freelancer';
     const val = calcValorOs(os); // sempre usa totalPagar (col O) como base
     const metaReal = p.metaVal !== undefined ? p.metaVal : (p.metaAplicavel ? BONUS_POR_OS : 0);
@@ -1266,9 +1268,10 @@ function renderHistorico(){
 function renderRanking(){
   const c=document.getElementById('rankingList');
   const enc=osData.filter(o=>o.lider===currentLider.id&&o.status==='encerrada'&&o.tipo==='lider');
-  const meItens=enc.reduce((s,o)=>s+totalItens(o.real||{}),0);
+  const meItens=enc.reduce((s,o)=>s+(o.mfItens||totalItens(o.real||{})),0);
   const meHoras=enc.reduce((s,o)=>s+(o.real?.horas||0),0);
-  const meMih=meHoras>0?Math.round(meItens/meHoras):0;
+  const meAgentes=enc.reduce((s,o)=>s+(o.real?.agentes||1),0);
+  const meMih=meHoras>0&&meItens>0?Math.round(meItens/(meAgentes/enc.length||1)/meHoras):0;
 
   const eu={id:currentLider.id,nome:currentLider.nome,cor:currentLider.cor,mih:meMih,itens:meItens,horas:meHoras};
   const outros=RANKING_DEMO
@@ -1304,7 +1307,7 @@ function renderBonus(){
   const c=document.getElementById('bonusHistBody');
   if(!encLider.length){ c.innerHTML=`<div class="empty"><div class="empty-icon">🏆</div><div class="empty-title">Nenhuma OS encerrada este mês como líder</div></div>`; return; }
   c.innerHTML=encLider.map(os=>{
-    const r=os.real, ti=os.mfItens||totalItens(r), mih=(r.horas>0&&ti>0)?Math.round(ti/r.horas):0, df=new Date(os.data+'T12:00:00').toLocaleDateString('pt-BR');
+    const r=os.real, ti=os.mfItens||totalItens(r), agts=(r.agentes||1), mih=(r.horas>0&&ti>0&&agts>0)?Math.round(ti/agts/r.horas):0, df=new Date(os.data+'T12:00:00').toLocaleDateString('pt-BR');
     const val=calcValorOs(os);
     return `<div class="hist-row">
       <span class="hist-os">${os.num}</span>
