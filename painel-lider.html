@@ -1337,9 +1337,8 @@ function renderFinanceiro(){
   const soLider=todasEnc.filter(o=>o.tipo==='lider');
   const soFreel=todasEnc.filter(o=>o.tipo==='freelancer');
 
-  const totalBase=todasEnc.reduce((s,o)=>s+(o.real?.horas||0)*(o.real?.agentes||1)*HC_HORA,0);
-  const totalBonus=soLider.filter(o=>o.real?.bonus).length*BONUS_POR_OS;
-  const totalMes=totalBase+totalBonus;
+  const totalBase=todasEnc.reduce((s,o)=>s+calcValorOs(o),0);
+  const totalMes=totalBase; // calcValorOs já inclui meta/bônus da coluna O
 
   document.getElementById('finResumo').innerHTML=`
     <h3 style="font-size:16px;font-weight:700;margin-bottom:4px">Resumo financeiro — ${mesLabel.charAt(0).toUpperCase()+mesLabel.slice(1)}</h3>
